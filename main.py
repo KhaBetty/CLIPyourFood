@@ -27,7 +27,7 @@ if __name__ == '__main__':
         # read the ingredients text file into a list of lines
         ing_lines = f_ing.readlines()
 
-    # open the text file of the ingredients
+    # open the text file of the food
     with open(food_img_file, 'r') as f_food:
         # read the ingredients text file into a list of lines
         food_lines = f_food.readlines()
