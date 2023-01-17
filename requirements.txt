@@ -1,1 +1,6 @@
-datasets
+datasets #maybe not
+pandas
+jupyter
+matplotlib
+seaborn
+scikit-learn
