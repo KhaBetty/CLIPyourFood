@@ -42,11 +42,11 @@ class IngredientsDataset(Dataset):
 		img_name = self.images[idx]
 		img_path = os.path.join(self.root_dir, img_name + self.img_ext)
 		image = io.imread(img_path)
+		# TODO change after full keys dict to tensor of labels
 		ingredients = list(self.ingredients_frame[img_name])
-		sample = {'image': image, 'ingredients': ingredients}
 
 		if self.transform:
-			sample['image'] = self.transform(sample['image'])
+			image = self.transform(image)
 
-		return sample
+		return image, ingredients
 
