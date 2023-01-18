@@ -6,3 +6,4 @@ scikit-learn
 ftfy
 regex
 tqdm
+json5
