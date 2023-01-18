@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
+from CLIPyourFood.Data.utils import lables2vec
 
 import warnings
 
@@ -27,10 +28,11 @@ class IngredientsDataset(Dataset):
 			transform (callable, optional): Optional transform to be applied
 				on a sample.
 		"""
-		self.ingredients_frame = pd.read_json(json_file)
+		with open(json_file) as json_data:
+			self.ingredients_frame = json.load(json_data)
 		self.root_dir = root_dir
 		self.transform = transform
-		self.images = list(self.ingredients_frame.columns)
+		self.images = list(self.ingredients_frame.keys())
 		self.img_ext = img_ext
 
 	def __len__(self):
@@ -43,10 +45,29 @@ class IngredientsDataset(Dataset):
 		img_path = os.path.join(self.root_dir, img_name + self.img_ext)
 		image = io.imread(img_path)
 		# TODO change after full keys dict to tensor of labels
-		ingredients = list(self.ingredients_frame[img_name])
+		ingredients_names = self.ingredients_frame[img_name]
+		ingredients_vec = lables2vec(ingredients_names, os.path.join(self.root_dir,
+		                                                             'ing_vector_one_in_line.txt'))
 
 		if self.transform:
 			image = self.transform(image)
 
-		return image, ingredients
+		return image, ingredients_vec
 
+
+# dataset_path = '../food101/train/food-101/images'
+# json_path = dataset_path + '/ing_jsn.json'
+#
+# dataset = IngredientsDataset(json_path, dataset_path, transforms)
+#
+# # split train and test
+# train_size = int(0.8 * dataset.__len__())
+# test_size = dataset.__len__() - train_size
+# train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
+#
+# train_dataloader = DataLoader(train_dataset, batch_size=2, shuffle=True)
+# test_dataloader = DataLoader(test_dataset, batch_size=2, shuffle=True)
+# device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+#
+#
+# images, ing_list = next(iter(train_dataloader))

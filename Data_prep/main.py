@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
 
     
-    with open("ing_jsn.json", "w") as outfile:
+    with open("../food101/train/food-101/images/ing_jsn.json", "w") as outfile:
         json.dump(ing_dict, outfile)
 
 
