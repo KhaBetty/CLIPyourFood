@@ -60,8 +60,8 @@ if __name__ == '__main__':
         for food_class in food_dict:
             for id in food_dict[food_class]:
                 key = str(food_class) + slash + str(id)
-                value_with_dish = value_ing.copy()
-                value_with_dish.append(food_class)
+                value_ing_cpy = value_ing.copy()
+                value_with_dish = [value_ing_cpy,food_class]
                 #print(key) # for debug
                 ing_dict[key] = value_ing
                 ing_dish_dict[key] = value_with_dish
