@@ -47,19 +47,27 @@ if __name__ == '__main__':
     # create an empty dictionary for the ingredients
     ing_dict = {}
 
+    # create an empty dictionary for the ingredients and dish
+    ing_dish_dict = {}
+
 
     # loop through the lines in the text file
     for line in ing_lines:
         #remove the \n from the end of the line:
         line = line[:-1]
         # split the line on ':'
-        value = line.split(',')
+        value_ing = line.split(',')
         for food_class in food_dict:
             for id in food_dict[food_class]:
                 key = str(food_class) + slash + str(id)
+                value_with_dish = value_ing.copy()
+                value_with_dish.append(food_class)
                 #print(key) # for debug
-                ing_dict[key] = value
-
+                ing_dict[key] = value_ing
+                ing_dish_dict[key] = value_with_dish
 
     with open("../food101/train/food-101/images/ing_jsn.json", "w") as outfile:
         json.dump(ing_dict, outfile)
+
+    with open("../food101/train/food-101/images/ing_with_dish_jsn.json", "w") as outfile2:
+        json.dump(ing_dish_dict, outfile2)
