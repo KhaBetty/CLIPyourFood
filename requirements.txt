@@ -1,0 +1,10 @@
+pandas
+jupyter
+matplotlib
+seaborn
+scikit-learn
+ftfy
+regex
+tqdm
+json5
+scikit-image
