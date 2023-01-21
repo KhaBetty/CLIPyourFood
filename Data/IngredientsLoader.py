@@ -72,3 +72,6 @@ class IngredientsDataset(Dataset):
 #
 #
 # images, ing_list = next(iter(train_dataloader))
+
+#convert tuple to list
+# ing_list = list(ing_list)

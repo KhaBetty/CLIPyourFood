@@ -25,14 +25,15 @@ class CLIPModel:
         self.model_name = model_name
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.model, self.preprocess = clip.load(model_name, device=self.device)
+        self.text_shape = 512
 
     def get_clip_features(self,image, text):
-        image = self.preprocess(image).unsqueeze(0).to(self.device)
-        text = self.clip.tokenize(text).to(self.device)
+        #image = self.preprocess(image).unsqueeze(0).to(self.device)
+        text = clip.tokenize(text).to(self.device)
         with torch.no_grad():
-            image_features = self.model.encode_image(image)
+            #image_features = self.model.encode_image(image)
             text_features = self.model.encode_text(text)
-        return image_features, text_features
+        return text_features #image_features,
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -45,14 +46,23 @@ class BasicBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(planes)
         self.downsample = downsample
         self.stride = stride
+        self.clip_flag = False
         if clip_addition is not None:
             self.fc_clip_addition = nn.Linear(clip_addition, planes) #way to add CLIP features to the model
+            self.clip_flag = True
             #TODO check the size of the CLIP features
 
-    def forward(self, x, clip_features=None):
-        residual = x
+    def forward(self, x):
+        if self.clip_flag:
+            clip_features = x[1]
+            residual = x[0]
+            input = x[0]
+        else:
+            residual = x
+            input = x
+        #TODO maybe it coming back with lass than 4 dimensions
 
-        out = self.conv1(x)
+        out = self.conv1(input)
         out = self.bn1(out)
         out = self.relu(out)
 
@@ -60,53 +70,57 @@ class BasicBlock(nn.Module):
         out = self.bn2(out)
 
         if self.downsample is not None:
-            residual = self.downsample(x)
+            residual = self.downsample(input)
 
         if clip_features is not None:
-            out = out + residual + self.fc_clip_addition(clip_features) #our change of adding CLIP features
+            clip_features = self.fc_clip_addition(clip_features)
+            #pad the clip features to the same size as the residual
+            clip_features = clip_features.unsqueeze(2).unsqueeze(3)
+            clip_features = clip_features.expand(clip_features.size(0), clip_features.size(1), residual.size(2), residual.size(3)) #TODO check if this is the right way to do it
+            out = out + residual + clip_features#self.fc_clip_addition(clip_features) #TODO change clip features to be with gradient?
         else:
             out = out + residual
         out = self.relu(out)
 
         return out
 
-
-class Bottleneck(nn.Module): #TODO add to the other models
-    expansion = 4
-    def __init__(self, inplanes, planes, stride=1, downsample=None):
-        super(Bottleneck, self).__init__()
-        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
-                               padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(planes * 4)
-        self.relu = nn.ReLU(inplace=True)
-        self.downsample = downsample
-        self.stride = stride
-
-    def forward(self, x):
-        residual = x
-
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-
-        out = self.conv2(out)
-        out = self.bn2(out)
-        out = self.relu(out)
-
-        out = self.conv3(out)
-        out = self.bn3(out)
-
-        if self.downsample is not None:
-            residual = self.downsample(x)
-
-        out += residual #add here CLIP additon
-        out = self.relu(out)
-
-        return out
+#
+# class Bottleneck(nn.Module): #TODO add to the other models
+#     expansion = 4
+#     def __init__(self, inplanes, planes, stride=1, downsample=None):
+#         super(Bottleneck, self).__init__()
+#         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
+#         self.bn1 = nn.BatchNorm2d(planes)
+#         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
+#                                padding=1, bias=False)
+#         self.bn2 = nn.BatchNorm2d(planes)
+#         self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
+#         self.bn3 = nn.BatchNorm2d(planes * 4)
+#         self.relu = nn.ReLU(inplace=True)
+#         self.downsample = downsample
+#         self.stride = stride
+#
+#     def forward(self, x):
+#         residual = x
+#
+#         out = self.conv1(x)
+#         out = self.bn1(out)
+#         out = self.relu(out)
+#
+#         out = self.conv2(out)
+#         out = self.bn2(out)
+#         out = self.relu(out)
+#
+#         out = self.conv3(out)
+#         out = self.bn3(out)
+#
+#         if self.downsample is not None:
+#             residual = self.downsample(x)
+#
+#         out += residual #add here CLIP additon
+#         out = self.relu(out)
+#
+#         return out
 
 config = {
     'A': [2, 2, 2, 2],
@@ -127,15 +141,15 @@ class ResNet(BasicModule):
         elif depth == 34:
             block = BasicBlock
             layers = config['B']
-        elif depth == 50:
-            block = Bottleneck
-            layers = config['B']
-        elif depth == 101:
-            block = Bottleneck
-            layers = config['C']
-        else:
-            block = Bottleneck
-            layers = config['D']
+        # elif depth == 50:
+        #     block = Bottleneck
+        #     layers = config['B']
+        # elif depth == 101:
+        #     block = Bottleneck
+        #     layers = config['C']
+        # else:
+        #     block = Bottleneck
+        #     layers = config['D']
 
         self.clip_model = None
         if clip_flag:
@@ -145,6 +159,8 @@ class ResNet(BasicModule):
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        # if clip_flag is not None:
+        #     self.fc_clip_addition = nn.Linear(512, planes) #way to add CLIP features to the model
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
@@ -173,29 +189,37 @@ class ResNet(BasicModule):
 
         layers = []
         if self.clip_model is not None: #addition to add CLIP features
-            layers.append(block(self.inplanes, planes, stride, downsample, self.clip_addition)) #TODO change the clip addition
+            layers.append(block(self.inplanes, planes, stride, downsample, self.clip_model.text_shape)) #TODO change the clip addition
         else:
             layers.append(block(self.inplanes, planes, stride, downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes))
+            if self.clip_model is not None:  # addition to add CLIP features
+                layers.append(block(self.inplanes, planes, clip_addition=self.clip_model.text_shape)) #TODO do i need it?
+            else:
+                layers.append(block(self.inplanes, planes))
 
         return nn.Sequential(*layers)
 
-    def forward(self, x, text_x=None): #get the original input
+    def forward(self, x_all): #get the original input
         #call CLIP features
         if self.clip_model is not None:
-            self.clip_addition = self.clip_model.clip_features(x, text_x)
+            x = x_all[0]
+            text_x = x_all[1]
+            self.clip_addition = self.clip_model.get_clip_features(x, text_x)
             x = self.conv1(x)
             x = self.bn1(x)
             x = self.relu(x)
             x = self.maxpool(x)
 
-            x = self.layer1(x,self.clip_addition)
-            x = self.layer2(x,self.clip_addition)
-            x = self.layer3(x,self.clip_addition)
-            x = self.layer4(x,self.clip_addition)
+
+
+            x = self.layer1((x,self.clip_addition))
+            x = self.layer2((x,self.clip_addition))
+            x = self.layer3((x,self.clip_addition))
+            x = self.layer4((x,self.clip_addition))
         else:
+            x = x_all
             x = self.conv1(x)
             x = self.bn1(x)
             x = self.relu(x)
