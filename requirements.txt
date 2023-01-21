@@ -7,3 +7,4 @@ ftfy
 regex
 tqdm
 json5
+scikit-image

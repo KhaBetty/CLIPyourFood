@@ -27,7 +27,7 @@ class CLIPModel:
         self.model, self.preprocess = clip.load(model_name, device=self.device)
         self.text_shape = 512
 
-    def get_clip_features(self,image, text):
+    def get_clip_features(self,text):
         #image = self.preprocess(image).unsqueeze(0).to(self.device)
         text = clip.tokenize(text).to(self.device)
         with torch.no_grad():
@@ -58,6 +58,7 @@ class BasicBlock(nn.Module):
             residual = x[0]
             input = x[0]
         else:
+            clip_features = None
             residual = x
             input = x
         #TODO maybe it coming back with lass than 4 dimensions
@@ -73,16 +74,16 @@ class BasicBlock(nn.Module):
             residual = self.downsample(input)
 
         if clip_features is not None:
-            clip_features = self.fc_clip_addition(clip_features)
+            clip_features_fc = self.fc_clip_addition(clip_features.float())
             #pad the clip features to the same size as the residual
-            clip_features = clip_features.unsqueeze(2).unsqueeze(3)
-            clip_features = clip_features.expand(clip_features.size(0), clip_features.size(1), residual.size(2), residual.size(3)) #TODO check if this is the right way to do it
-            out = out + residual + clip_features#self.fc_clip_addition(clip_features) #TODO change clip features to be with gradient?
+            clip_features_fc = clip_features_fc.unsqueeze(2).unsqueeze(3)
+            clip_features_fc = clip_features_fc.expand(clip_features_fc.size(0), clip_features_fc.size(1), residual.size(2), residual.size(3)) #TODO check if this is the right way to do it
+            out = out + residual + clip_features_fc#self.fc_clip_addition(clip_features) #TODO change clip features to be with gradient?
         else:
             out = out + residual
         out = self.relu(out)
 
-        return out
+        return out,clip_features
 
 #
 # class Bottleneck(nn.Module): #TODO add to the other models
@@ -206,7 +207,7 @@ class ResNet(BasicModule):
         if self.clip_model is not None:
             x = x_all[0]
             text_x = x_all[1]
-            self.clip_addition = self.clip_model.get_clip_features(x, text_x)
+            self.clip_addition = self.clip_model.get_clip_features(text_x)
             x = self.conv1(x)
             x = self.bn1(x)
             x = self.relu(x)
@@ -215,9 +216,10 @@ class ResNet(BasicModule):
 
 
             x = self.layer1((x,self.clip_addition))
-            x = self.layer2((x,self.clip_addition))
-            x = self.layer3((x,self.clip_addition))
-            x = self.layer4((x,self.clip_addition))
+            x = self.layer2((x[0],self.clip_addition))
+            x = self.layer3((x[0],self.clip_addition))
+            x = self.layer4((x[0],self.clip_addition))
+            x = x[0]
         else:
             x = x_all
             x = self.conv1(x)

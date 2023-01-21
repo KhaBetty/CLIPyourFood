@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 from CLIPyourFood.Data.utils import lables2vec
+from PIL import Image
 
 import warnings
 
@@ -43,7 +44,9 @@ class IngredientsDataset(Dataset):
 			idx = idx.tolist()
 		img_name = self.images[idx]
 		img_path = os.path.join(self.root_dir, img_name + self.img_ext)
-		image = io.imread(img_path)
+		#image = io.imread(img_path)
+		image = Image.open(img_path)
+		image = image.convert('RGB')
 		# TODO change after full keys dict to tensor of labels
 		ingredients_names = self.ingredients_frame[img_name][0]
 		dish_name = self.ingredients_frame[img_name][1]

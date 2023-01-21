@@ -15,6 +15,8 @@ import time
 import copy
 import os
 
+
+
 #choose random seed
 seed = 42
 np.random.seed(seed)
@@ -24,7 +26,7 @@ num_classes = 227
 
 
 #hyperparameters
-batch_size = 2
+batch_size = 32
 learning_rate = 1e-2
 momentum=0.9
 transforms = transforms.Compose(
@@ -42,6 +44,9 @@ use_cuda = False
 dataset_path = 'food101/train/food-101/images'
 json_path = dataset_path + '/ing_with_dish_jsn.json'
 
+# train_dataset = torchvision.datasets.Food101(dataset_path, split='train', download=True, transform=transforms)
+# test_dataset = torchvision.datasets.Food101(dataset_path, split='test', download=True, transform=transforms)
+# #
 dataset = IngredientsDataset(json_path, dataset_path, transforms)
 
 # split train and test
@@ -55,14 +60,14 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 #model
 # net = models.resnet18(pretrained=True)
-net = ResNet(depth=18, clip_flag=False)#,num_classes=num_classes)
+net = ResNet(depth=18, clip_flag=True)#,num_classes=num_classes)
 # net = torchvision.models.get_model_weights(torchvision.models.resnet18)
 net.load_state_dict(torch.hub.load_state_dict_from_url(model_urls['resnet18']), strict =False)
 optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=momentum)
 #net = net.cuda() if device =='cuda:0'  else net
 num_ftrs = net.fc.in_features
 net.fc = nn.Linear(num_ftrs, num_classes)
-net = net.cuda() if device =='cuda:0'  else net
+net = net.cuda() #if device =='cuda:0'  else net
 
 def predict(outputs, threshold=0.5):
     """
@@ -85,17 +90,17 @@ def evaluate_model(model, dataloader, criterion):
         labels = list(labels)
         #labels = labels.to(device)
         ingredients_vec = ingredients_vec.to(device)
-        outputs = model(inputs) #((inputs,labels)) #TODO debug because not the correct way for batch
+        outputs = model((inputs,labels)) #TODO debug because not the correct way for batch
         preds = predict(outputs, threshold=0.8)
         loss = criterion(outputs, ingredients_vec)
         running_loss += loss.item() * inputs.size(0)
         running_corrects += torch.sum(preds == ingredients_vec.data)
         print('loss', loss)
     epoch_loss = running_loss /  (len(dataloader.dataset) * preds.shape[1]) #preds.nelement()
-    epoch_acc = running_corrects.double() /  (len(dataloader.dataset) * preds.shape[1])
+    epoch_acc = running_corrects.double() / (len(dataloader.dataset) * preds.shape[1])
     return epoch_loss, epoch_acc
 
-epoch_loss, epoch_acc = evaluate_model(net, test_dataloader, criterion)
+#epoch_loss, epoch_acc = evaluate_model(net, test_dataloader, criterion)
 
 n_epochs = 5
 print_every = 10
@@ -123,7 +128,7 @@ for epoch in range(1, n_epochs+1):
 
         running_loss += loss.item()
         pred = predict(outputs, threshold=0.8)
-        correct += torch.sum(pred==target_).item()
+        correct += torch.sum(pred==target_).item() #TODO change to 1 when it all correct , divide by 227
         total += target_.size(0)
         if batch_idx % 20 == 0:
             print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
