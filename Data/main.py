@@ -52,19 +52,23 @@ if __name__ == '__main__':
 
 
     # loop through the lines in the text file
+    food_class = 'apple_pie'
+    food_classes_list = list(food_dict)
+    class_i = 1
     for line in ing_lines:
         #remove the \n from the end of the line:
         line = line[:-1]
         # split the line on ':'
-        value_ing = line.split(',')
-        for food_class in food_dict:
-            for id in food_dict[food_class]:
-                key = str(food_class) + slash + str(id)
-                value_ing_cpy = value_ing.copy()
-                value_with_dish = [value_ing_cpy,food_class]
-                #print(key) # for debug
-                ing_dict[key] = value_ing
-                ing_dish_dict[key] = value_with_dish
+        value = line.split(',')
+        value_with_dish = [value, food_class]
+        #for food_class in food_dict:
+        for id in food_dict[food_class]:
+            key = str(food_class) + slash + str(id)
+            ing_dict[key] = value
+            ing_dish_dict[key] = value_with_dish
+        class_i = class_i+1
+        if class_i<=101 :
+            food_class = food_classes_list[food_classes_list.index(food_class) + 1]
 
     with open("../food101/train/food-101/images/ing_jsn.json", "w") as outfile:
         json.dump(ing_dict, outfile)
