@@ -17,6 +17,12 @@ warnings.filterwarnings("ignore")
 
 plt.ion()
 
+TRANSFORMS = transforms.Compose(
+    [
+        transforms.ToTensor(),
+        transforms.Resize((224, 224))
+        # add normilization
+    ])
 
 class IngredientsDataset(Dataset):
 	"""Ingredients dataset."""

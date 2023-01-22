@@ -11,12 +11,13 @@ import matplotlib.pyplot as plt
 import time
 import copy
 import os
-from CLIPyourFood.Data.IngredientsLoader import IngredientsDataset
-from CLIPyourFood.model import ResNet
-from CLIPyourFood.model.ResNet import NUM_CATRGORIES
+from CLIPyourFood.Data.IngredientsLoader import IngredientsDataset, TRANSFORMS
+from CLIPyourFood.model.ResNet import NUM_CATRGORIES, model_urls,ResNet
+
+THRESHOLD = 0.8
 
 
-def predict(outputs, threshold=0.5):
+def predict(outputs, threshold=THRESHOLD):
     """
     :param outputs: output of the model
     :return: the predicted labels
@@ -58,7 +59,7 @@ def plot_statistics(train_results, val_results, output_path):
     plt.close()
 
 
-def load_data_in_sections(dataset_dir_path, json_dict, transforms, batch_size):
+def load_data_in_sections(dataset_dir_path, json_dict, transforms=TRANSFORMS, batch_size=32):
     '''
     Load the data from paths and return dataloaders.
     '''
@@ -71,13 +72,32 @@ def load_data_in_sections(dataset_dir_path, json_dict, transforms, batch_size):
     return train_dataloader, val_dataloader, test_dataloader
 
 
-def eval_mode_net(model, num_classes=NUM_CATRGORIES):
-    '''
-    Eval model as Resnet Original architecture (remove the additional layers)
-    '''
-    new_model = ResNet(depth=18, clip_flag=False)
-    num_ftrs = new_model.fc.in_features
-    new_model.fc = nn.Linear(num_ftrs, num_classes)
-    new_model.load_state_dict(model.state_dict(), strict=False)
-    new_model = new_model.cuda()
-    return new_model.eval()
+def load_model(w_clip=False, model_path=None):
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    net = ResNet(depth=18, clip_flag=w_clip)
+    if model_path:
+        net.load_state_dict(torch.load(model_path))
+    else:
+        net.load_state_dict(torch.hub.load_state_dict_from_url(model_urls['resnet18']), strict=False)
+    num_ftrs = net.fc.in_features
+    net.fc = nn.Linear(num_ftrs, NUM_CATRGORIES)
+    net = net.to(device)
+    return net
+
+
+def freeze_original_resnet(model):
+    for name, param in model.named_parameters():
+        if 'fc_clip_addition' not in name:
+            param.requires_grad = False
+    return model
+
+# def eval_mode_net(model, num_classes=NUM_CATRGORIES):
+#     '''
+#     Eval model as Resnet Original architecture (remove the additional layers)
+#     '''
+#     new_model = ResNet(depth=18, clip_flag=False)
+#     num_ftrs = new_model.fc.in_features
+#     new_model.fc = nn.Linear(num_ftrs, num_classes)
+#     new_model.load_state_dict(model.state_dict(), strict=False)
+#     new_model = new_model.cuda()
+#     return new_model.eval()
