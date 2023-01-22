@@ -2,7 +2,9 @@ import numpy as np
 import json5 as json
 
 def lables2vec(lables, ing_vec_file_path):
-	# recreating the ing label vec
+	'''
+	Recreating the ingredient labels vector to numerical representation of the vector
+	'''
 	with open(ing_vec_file_path) as f:
 		ing_list = f.read().splitlines()
 	N = len(ing_list)
@@ -25,7 +27,9 @@ def lables2vec(lables, ing_vec_file_path):
 
 
 def vec2lables(vec, ing_vec_file_path):
-	# recreating the ing label vec
+	'''
+	Recreating the numerical representation of the vector to ingredient labels vector
+	'''
 	with open(ing_vec_file_path) as f:
 		ing_list = f.read().splitlines()
 	N = len(ing_list)
@@ -50,7 +54,9 @@ def vec2lables(vec, ing_vec_file_path):
 
 
 def create_ing_dict(ingredients_file, food_img_file, slash):
-
+	'''
+	Create file text of ingredients representation
+	'''
 	# open the text file of the ingredients
 	with open(ingredients_file, 'r') as f_ing:
 		# read the ingredients text file into a list of lines

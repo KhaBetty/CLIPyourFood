@@ -1,16 +1,8 @@
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import numpy as np
-from sklearn.model_selection import train_test_split
-import torchvision.models
-import torchvision
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
+from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
-import time
-import copy
-import os
 from CLIPyourFood.Data.IngredientsLoader import IngredientsDataset, TRANSFORMS
 from CLIPyourFood.model.ResNet import NUM_CATRGORIES, model_urls,ResNet
 
@@ -19,8 +11,7 @@ THRESHOLD = 0.8
 
 def predict(outputs, threshold=THRESHOLD):
     """
-    :param outputs: output of the model
-    :return: the predicted labels
+    Predict function for the ingredients.
     """
     predicted = torch.sigmoid(outputs)
     predicted[predicted >= threshold] = 1
@@ -29,6 +20,9 @@ def predict(outputs, threshold=THRESHOLD):
 
 
 def accuracy(torch_sum, batch_size, categories_num):
+    '''
+    Accuracy calculated of the current batch.
+    '''
     return torch_sum / (batch_size * categories_num)
 
 
@@ -73,6 +67,9 @@ def load_data_in_sections(dataset_dir_path, json_dict, transforms=TRANSFORMS, ba
 
 
 def load_model(w_clip=False, model_path=None):
+    '''
+    Load Resnet18 from local checkpoint or download pretrained.
+    '''
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     net = ResNet(depth=18, clip_flag=w_clip)
     if model_path:
@@ -86,6 +83,9 @@ def load_model(w_clip=False, model_path=None):
 
 
 def freeze_original_resnet(model):
+    '''
+    Freeze Resnet layers for training only the additions.
+    '''
     for name, param in model.named_parameters():
         if 'fc_clip_addition' not in name:
             param.requires_grad = False
