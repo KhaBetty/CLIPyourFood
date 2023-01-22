@@ -12,7 +12,8 @@ from Data.IngredientsLoader import IngredientsDataset
 import matplotlib.pyplot as plt
 from CLIPyourFood.Data.utils import vec2lables
 from CLIPyourFood.model.ResNet import ResNet, model_urls
-from CLIPyourFood.model.utils import predict, accuracy
+from CLIPyourFood.model.utils import predict, accuracy, plot_statistics
+from CLIPyourFood.model.utils import predict, accuracy, load_data_in_sections, eval_mode_net
 import time
 import copy
 import os
@@ -46,29 +47,36 @@ use_cuda = False
 
 dataset_path = 'food101/train/food-101/images'
 json_path = dataset_path + '/ing_with_dish_jsn.json'
-metadata_test = 'food101/train/food-101/meta/test.txt'
-metadata_train = 'food101/train/food-101/meta/train.txt'
+json_dict = {'train' : 'food101/train/food-101/images/ing_with_dish_jsn_train.json',
+             'val' : 'food101/train/food-101/images/ing_with_dish_jsn_val.json',
+             'test' : 'food101/train/food-101/images/ing_with_dish_jsn_test.json'}
+# metadata_test = 'food101/train/food-101/meta/test.txt'
+# metadata_train = 'food101/train/food-101/meta/train.txt'
+# metadata_test = 'food101/train/food-101/meta/test.txt'
+# metadata_train = 'food101/train/food-101/meta/train.txt'
+output_path = '/home/maya/proj_deep/CLIPyourFood/results/resnet18_w_clip_val_as_resnet'
 
-dataset = IngredientsDataset(json_path, dataset_path, transform=transforms)
+#dataset = IngredientsDataset(json_path, dataset_path, transform=transforms)
 # train_dataset = torchvision.datasets.Food101(dataset_path, split='train', download=True, transform=transforms)
 # test_dataset = torchvision.datasets.Food101(dataset_path, split='test', download=True, transform=transforms)
 # #
 # train_dataset = IngredientsDataset(json_path, dataset_path,metadata_train, transforms)
 # test_dataset = IngredientsDataset(json_path, dataset_path,metadata_test, transforms)
 # split train and test and val
-train_size = int(0.8 * dataset.__len__())
-test_size = dataset.__len__() - train_size
-train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
-val_size = int(0.25 * train_dataset.__len__())
-train_size = train_dataset.__len__() - val_size
-train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [train_size, val_size])
-print('train' , train_dataset[0])
-print('val', val_dataset[0])
-print('test', test_dataset[0])
+# train_size = int(0.8 * dataset.__len__())
+# test_size = dataset.__len__() - train_size
+# train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
+# val_size = int(0.25 * train_dataset.__len__())
+# train_size = train_dataset.__len__() - val_size
+# train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [train_size, val_size])
+# print('train' , train_dataset[0])
+# print('val', val_dataset[0])
+# print('test', test_dataset[0])
 
-train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
-test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+# train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+# val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
+# test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+train_dataloader, val_dataloader, test_dataloader = load_data_in_sections(dataset_dir_path, json_dict, transforms, batch_size)
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 #model
@@ -81,6 +89,8 @@ optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=momentum)
 num_ftrs = net.fc.in_features
 net.fc = nn.Linear(num_ftrs, num_classes)
 net = net.cuda() #if device =='cuda:0'  else net
+
+#turn to eval mode
 
 
 #evaluation of model on test set
@@ -145,10 +155,12 @@ for epoch in range(1, n_epochs+1):
     total_t=0
     correct_t=0
     with torch.no_grad():
-        net.eval()
+        #net.eval()
+        #eval the model
+        val_net = eval_mode_net(net)
         for data_t, target_t, labels_ in val_dataloader:
             data_t, target_t = data_t.to(device), target_t.to(device)
-            outputs_t = net((data_t,labels_))
+            outputs_t = val_net(data_t) #((data_t,labels_))
             loss_t = criterion(outputs_t, target_t)
             batch_loss += loss_t.item()
             #_,pred_t = torch.max(outputs_t, dim=1)
@@ -163,9 +175,12 @@ for epoch in range(1, n_epochs+1):
 
         if network_learned:
             valid_loss_min = batch_loss
-            torch.save(net.state_dict(), 'resnet_w_clip.pt')
+            torch.save(net.state_dict(), output_path + '/resnet_w_clip.pt')
             print('Improvement-Detected, save-model')
     net.train()
+train_results = {'accuracy': train_acc, 'loss': train_loss}
+val_results = {'accuracy': val_acc, 'loss': val_loss}
+plot_statistics(train_results, val_results, output_path)
 
 # #remove fc of clip
 # epoch_loss, epoch_acc = evaluate_model(net, test_dataloader, criterion)
