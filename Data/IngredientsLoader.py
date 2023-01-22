@@ -53,13 +53,14 @@ class IngredientsDataset(Dataset):
 		# TODO change after full keys dict to tensor of labels
 		ingredients_names = self.ingredients_frame[img_name][0]
 		dish_name = self.ingredients_frame[img_name][1]
+		dish_info = (img_path, dish_name)
 		ingredients_vec = lables2vec(ingredients_names, os.path.join(self.root_dir,
 		                                                             'ing_vector_one_in_line.txt'))
 
 		if self.transform:
 			image = self.transform(image)
 
-		return image, ingredients_vec, dish_name
+		return image, ingredients_vec, dish_info#dish_name
 
 
 # dataset_path = '../food101/train/food-101/images'

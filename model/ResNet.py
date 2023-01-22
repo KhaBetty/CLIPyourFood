@@ -3,7 +3,9 @@ import math
 from.BasicModule import BasicModule
 import clip
 import torch
+from PIL import Image
 
+NUM_CATRGORIES = 227
 
 model_urls = {
     'resnet18': "https://download.pytorch.org/models/resnet18-f37072fd.pth",
@@ -27,13 +29,26 @@ class CLIPModel:
         self.model, self.preprocess = clip.load(model_name, device=self.device)
         self.text_shape = 512
 
-    def get_clip_features(self,text):
-        #image = self.preprocess(image).unsqueeze(0).to(self.device)
-        text = clip.tokenize(text).to(self.device)
-        with torch.no_grad():
-            #image_features = self.model.encode_image(image)
-            text_features = self.model.encode_text(text)
-        return text_features #image_features,
+    def get_clip_features(self,image_paths, texts=None):
+        images = []
+        texts_tokens = []
+        images_features = []
+        texts_features = []
+        for image_path in image_paths:
+            image = Image.open(image_path)
+            image = image.convert('RGB')
+            image = self.preprocess(image).unsqueeze(0).to(self.device)
+            with torch.no_grad():
+                images_features.append(self.model.encode_image(image).float())
+        images_features = torch.concat(images_features)
+        if texts:
+            for text in texts:
+                texts_tokens.append(clip.tokenize(text).to(self.device))
+                with torch.no_grad():
+                    texts_features.append(self.model.encode_text(text))
+            texts_features = torch.concat(texts_features)
+
+        return images_features#, texts_features
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -210,7 +225,7 @@ class ResNet(BasicModule):
         if self.clip_model is not None:
             x = x_all[0]
             text_x = x_all[1]
-            self.clip_addition = self.clip_model.get_clip_features(text_x)
+            self.clip_addition = self.clip_model.get_clip_features(text_x[0], text_x[1])
             x = self.conv1(x)
             x = self.bn1(x)
             x = self.relu(x)
