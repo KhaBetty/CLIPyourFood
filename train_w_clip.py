@@ -48,7 +48,7 @@ json_dict = {'train': 'food101/train/food-101/images/ing_with_dish_jsn_train.jso
              'val': 'food101/train/food-101/images/ing_with_dish_jsn_val.json',
              'test': 'food101/train/food-101/images/ing_with_dish_jsn_test.json'}
 
-output_path = '/home/maya/proj_deep/CLIPyourFood/results/adding_fc_image_encode/resnet18_w_clip_w_freeze'
+output_path = '/home/maya/proj_deep/CLIPyourFood/results/adding_fc_image_text_encode/resnet_w_clip'
 
 train_dataloader, val_dataloader, test_dataloader = load_data_in_sections(dataset_path, json_dict, transforms,
                                                                           batch_size)
@@ -58,7 +58,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 net = load_model(w_clip=True, model_path=None)
 optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=momentum)
 
-net = freeze_original_resnet(net)
+# net = freeze_original_resnet(net)
 
 
 # evaluation of model on test set

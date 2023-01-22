@@ -1,23 +1,7 @@
 import torch
-import torch.nn as nn
-import torch.optim as optim
-import numpy as np
-from sklearn.model_selection import train_test_split
-import torchvision.models
-import torchvision
-from torch.utils.data import Dataset, DataLoader
-# import transforms
-from torchvision import transforms
-from Data.IngredientsLoader import TRANSFORMS
-import matplotlib.pyplot as plt
-from CLIPyourFood.Data.utils import vec2lables
 from CLIPyourFood.model.ResNet import ResNet, model_urls, NUM_CATRGORIES, CRITERION
 from CLIPyourFood.model.utils import predict, accuracy, THRESHOLD, load_model, load_data_in_sections
 from torchmetrics.classification import MulticlassPrecision, MulticlassRecall, MulticlassF1Score
-
-import time
-import argparse
-import os
 
 
 def precision_recall_f1_scores(predictions, targets):
@@ -31,6 +15,9 @@ def precision_recall_f1_scores(predictions, targets):
 
 
 def evaluate_model(model, dataloader, criterion=CRITERION, batch_size=32, clip_flag=False):
+    '''
+    Evaluate the trained model with different params as accuracy, loss, precision, recall, f1 score.
+    '''
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model.to(device)
     model.eval()
