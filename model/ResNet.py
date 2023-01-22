@@ -83,7 +83,10 @@ class BasicBlock(nn.Module):
             out = out + residual
         out = self.relu(out)
 
-        return out,clip_features
+        if clip_features is not None:
+            return out,clip_features
+        else:
+            return out
 
 #
 # class Bottleneck(nn.Module): #TODO add to the other models

@@ -21,7 +21,7 @@ plt.ion()
 class IngredientsDataset(Dataset):
 	"""Ingredients dataset."""
 
-	def __init__(self, json_file, root_dir, transform=None, img_ext='.jpg'):
+	def __init__(self, json_file, root_dir, metadata_path = None, transform=None, img_ext='.jpg'):
 		"""
 		Args:
 			json_file (string): Path to the json file with annotations.
@@ -34,6 +34,9 @@ class IngredientsDataset(Dataset):
 		self.root_dir = root_dir
 		self.transform = transform
 		self.images = list(self.ingredients_frame.keys())
+		if metadata_path:
+			with open(metadata_path) as meta_data:
+				self.images = meta_data.read().splitlines()
 		self.img_ext = img_ext
 
 	def __len__(self):
