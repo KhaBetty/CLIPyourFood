@@ -54,7 +54,7 @@ json_dict = {'train' : 'food101/train/food-101/images/ing_with_dish_jsn_train.js
 # metadata_train = 'food101/train/food-101/meta/train.txt'
 # metadata_test = 'food101/train/food-101/meta/test.txt'
 # metadata_train = 'food101/train/food-101/meta/train.txt'
-output_path = '/home/maya/proj_deep/CLIPyourFood/results/resnet18_w_clip_val_as_resnet'
+output_path = '/home/maya/proj_deep/CLIPyourFood/results/adding_fc_image_encode/resnet18_w_clip'
 
 #dataset = IngredientsDataset(json_path, dataset_path, transform=transforms)
 # train_dataset = torchvision.datasets.Food101(dataset_path, split='train', download=True, transform=transforms)
@@ -76,7 +76,7 @@ output_path = '/home/maya/proj_deep/CLIPyourFood/results/resnet18_w_clip_val_as_
 # train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 # val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
 # test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
-train_dataloader, val_dataloader, test_dataloader = load_data_in_sections(dataset_dir_path, json_dict, transforms, batch_size)
+train_dataloader, val_dataloader, test_dataloader = load_data_in_sections(dataset_path, json_dict, transforms, batch_size)
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 #model
@@ -155,12 +155,12 @@ for epoch in range(1, n_epochs+1):
     total_t=0
     correct_t=0
     with torch.no_grad():
-        #net.eval()
+        net.eval()
         #eval the model
-        val_net = eval_mode_net(net)
+        #val_net = eval_mode_net(net)
         for data_t, target_t, labels_ in val_dataloader:
             data_t, target_t = data_t.to(device), target_t.to(device)
-            outputs_t = val_net(data_t) #((data_t,labels_))
+            outputs_t = net((data_t,labels_))#val_net(data_t) #
             loss_t = criterion(outputs_t, target_t)
             batch_loss += loss_t.item()
             #_,pred_t = torch.max(outputs_t, dim=1)

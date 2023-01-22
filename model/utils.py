@@ -15,6 +15,7 @@ from CLIPyourFood.Data.IngredientsLoader import IngredientsDataset
 from CLIPyourFood.model import ResNet
 from CLIPyourFood.model.ResNet import NUM_CATRGORIES
 
+
 def predict(outputs, threshold=0.5):
     """
     :param outputs: output of the model
