@@ -71,15 +71,19 @@ def load_data_in_sections(dataset_dir_path, json_dict, transforms=TRANSFORMS, ba
     return train_dataloader, val_dataloader, test_dataloader
 
 
-def load_model(w_clip=False, model_path=None,other_connection_method=False):
+def load_model(w_clip=False, model_path=None, clip_modification={}):
     '''
     Load Resnet18 from local checkpoint or download pretrained.
     '''
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    if other_connection_method:
+    if not clip_modification:
+        net = ResNet(depth=18, clip_flag=w_clip)
+    elif clip_modification['other_connection_method']:
         net=concatResnet(depth=18, clip_flag=True)
     else:
-        net = ResNet(depth=18, clip_flag=w_clip)
+        net = ResNet(depth=18, clip_flag=w_clip,
+                     clip_image=clip_modification['clip_image_features'],
+                     clip_text=clip_modification['clip_text_features'])
     if model_path:
         num_ftrs = net.fc.in_features
         net.fc = nn.Linear(num_ftrs, NUM_CATRGORIES)
@@ -88,6 +92,10 @@ def load_model(w_clip=False, model_path=None,other_connection_method=False):
         net.load_state_dict(torch.hub.load_state_dict_from_url(model_urls['resnet18']), strict=False)
         num_ftrs = net.fc.in_features
         net.fc = nn.Linear(num_ftrs, NUM_CATRGORIES)
+
+    if clip_modification['freeze_original_resnet']:
+        net = freeze_original_resnet(net)
+
     net = net.to(device)
     return net
 

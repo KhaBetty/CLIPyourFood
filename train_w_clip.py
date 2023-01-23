@@ -19,6 +19,12 @@ json_dict = {'train': 'meta/ing_with_dish_jsn_train.json',
              'val': 'meta/ing_with_dish_jsn_val.json',
              'test': 'meta/ing_with_dish_jsn_test.json'}
 
+clip_modification = {'clip_image_features': True,
+                    'clip_text_features': False,
+                    'freeze_original_resnet': False,
+                    # for running the second method of connection with image features only
+                    'other_connection_method': False}
+
 config = {
         'batch_size': 32,
         'learning_rate': 1e-2,
@@ -29,22 +35,22 @@ config = {
                                         ]),
         'device': torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
         'clip_addition': True,
-        'freeze_original_resnet': False,
-        'other_connection_method': False, # for running the second method of connection with image features only
+        'clip_modification': clip_modification,
         'model_checkpoint': None,
         'output_path ': current_dir
         }
 
+
+
 def train(config, dataset_path, json_dict):
     # model
     net = load_model(w_clip=config['clip_addition'], model_path=config['model_checkpoint'],
-                     other_connection_method=config['other_connection_method'])
+                     clip_modification=config['clip_modification'])
 
     optimizer = optim.SGD(net.parameters(), lr=config['learning_rate'], momentum=config['momentum'])
     train_dataloader, val_dataloader, test_dataloader = load_data_in_sections(dataset_path, json_dict, transforms,
                                                                               config['batch_size'])
-    if config['freeze_original_resnet']:
-     net = freeze_original_resnet(net)
+
     n_epochs = 5
     valid_loss_min = np.Inf
     val_loss = []
