@@ -22,10 +22,11 @@ pip install -r requirements.txt
 ### 2. Download the dataset
 The used dataset is FOOD101.<br />
 Run the Data/utils.py file as main for downloading the dataset.
-
+* You can clean the data [annotations](http://www.ub.edu/cvub/ingredients101/) by yourself with Data/annotation_extractor.py.
 ### 3. Run
 #### Train model
 You can modify hyperparameters in the relevant block at train_model.py. <br />
+The output path should exist. 
 Run the train_model script for training model. <br />
 You can add to the model CLIP features of image. <br />
 If you have dish name info it can be also injected to the model with text encoder of CLIP.<br />
