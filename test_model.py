@@ -2,16 +2,30 @@ import torch
 from CLIPyourFood.model.ResNet import ResNet, model_urls, NUM_CATRGORIES, CRITERION
 from CLIPyourFood.model.utils import predict, accuracy, THRESHOLD, load_model, load_data_in_sections
 from torchmetrics.classification import MulticlassPrecision, MulticlassRecall, MulticlassF1Score
+import tqdm
 
 
-def precision_recall_f1_scores(predictions, targets):
-    precision_model = MulticlassPrecision(num_classes=NUM_CATRGORIES)
-    recall_model = MulticlassRecall(num_classes=NUM_CATRGORIES)
-    f1_score_model = MulticlassF1Score(num_classes=NUM_CATRGORIES)
-    scores_dict = {'precision': precision_model(predictions, targets),
-                   'recall': recall_model(predictions, targets),
-                   'f1_score': f1_score_model(predictions, targets)}
-    return scores_dict
+def calc_scores(predictions, targets):
+    def _opposite_binary_tensor(tensor):
+        return -1*tensor+1
+    tp = torch.sum(torch.mul(predictions,targets)).item()
+    fn = torch.sum(torch.mul(_opposite_binary_tensor(predictions),targets)).item()
+    tn = torch.sum(torch.mul(_opposite_binary_tensor(predictions), _opposite_binary_tensor(targets))).item()
+    fp = torch.sum(torch.mul(predictions , _opposite_binary_tensor(targets))).item()
+    if tp + fp == 0:
+        presicion = 0
+    else:
+        presicion = tp / (tp + fp)
+    if tp + fn == 0:
+        recall = 0
+    else:
+        recall = tp / (tp + fn)
+    if recall+presicion == 0:
+        f1_score = 0
+    else:
+        f1_score = 2 * presicion * recall / (recall+presicion)
+    return presicion, recall, f1_score
+
 
 
 def evaluate_model(model, dataloader, criterion=CRITERION, batch_size=32, clip_flag=False):
@@ -23,45 +37,48 @@ def evaluate_model(model, dataloader, criterion=CRITERION, batch_size=32, clip_f
     model.eval()
     running_loss = 0.0
     running_accuracy = 0
-    all_preds = None
-    all_tragets = None
-    for inputs, ingredients_vec, labels in dataloader:
+    running_presicion = 0
+    running_recall = 0
+    running_f1 = 0
+    for inputs, ingredients_vec, labels in tqdm.tqdm(dataloader):
         inputs = inputs.to(device)
-        # convert tuple to list
-        labels = list(labels)
-        # labels = labels.to(device)
         ingredients_vec = ingredients_vec.to(device)
         if clip_flag:
             outputs = model((inputs, labels))  # TODO debug because not the correct way for batch
         else:
             outputs = model(inputs)
-        preds = predict(outputs)
+        preds = predict(outputs)#, threshold=0.5)
         loss = criterion(outputs, ingredients_vec)
-        running_loss += loss.item() * inputs.size(0)
-        running_accuracy += accuracy(torch.sum(preds == ingredients_vec.data), batch_size)
-        if all_preds:
-            all_preds = torch.concat((all_preds, preds))
-        else:
-            all_preds = preds
-        if all_tragets:
-            all_tragets = torch.concat((all_tragets, ingredients_vec.data))
-        else:
-            all_tragets = ingredients_vec.data
-    epoch_loss = running_loss / len(dataloader.dataset)  # preds.nelement()
-    epoch_acc = running_accuracy.double() / len(dataloader.dataset)
+        running_loss += loss.item()
+        running_accuracy += accuracy(torch.sum(preds == ingredients_vec.data), batch_size).item()
+        presicion, recall, f1_score = calc_scores(preds, ingredients_vec.data)
+        running_presicion += presicion
+        running_recall += recall
+        running_f1 += f1_score
+
+    epoch_loss = running_loss / len(dataloader.dataset)
+    epoch_acc = running_accuracy / len(dataloader.dataset)
+    epoch_presicion = running_presicion /len(dataloader.dataset)
+    epoch_recall = running_recall / len(dataloader.dataset)
+    epoch_f1 = running_f1 / len(dataloader.dataset)
     eval_dict = {'loss': epoch_loss,
-                 'accuracy': epoch_acc} + precision_recall_f1_scores(all_preds, all_tragets)
+                 'accuracy': epoch_acc,
+                 'precision': epoch_presicion,
+                 'recall': epoch_recall,
+                 'f1_score': epoch_f1}
+
     return eval_dict
 
 
 if __name__ == '__main__':
     # load model
-    model_path = ''
+    model_path = '/home/maya/proj_deep/CLIPyourFood/results/adding_fc_image_encode/resnet18/resnet.pt'
     w_clip = False
-    dataset_path = ''
-    json_dict = ''
+    batch_size = 1
+    dataset_path = 'food101/train/food-101/images'
+    json_dict = {'test' : 'food101/train/food-101/images/ing_with_dish_jsn_test.json'}
     model = load_model(w_clip=w_clip, model_path=model_path)
-    _, _, test_dataloader = load_data_in_sections(dataset_path, json_dict=json_dict)
-    eval_dict = evaluate_model(model, test_dataloader)
+    _, _, test_dataloader = load_data_in_sections(dataset_path, json_dict=json_dict, batch_size=batch_size)
+    eval_dict = evaluate_model(model, test_dataloader, clip_flag=w_clip, batch_size=batch_size)
     for score in list(eval_dict.keys()):
         print(score, ':', eval_dict[score])

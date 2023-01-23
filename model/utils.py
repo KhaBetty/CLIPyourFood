@@ -19,7 +19,7 @@ def predict(outputs, threshold=THRESHOLD):
     return predicted
 
 
-def accuracy(torch_sum, batch_size, categories_num):
+def accuracy(torch_sum, batch_size, categories_num=NUM_CATRGORIES):
     '''
     Accuracy calculated of the current batch.
     '''
@@ -57,12 +57,16 @@ def load_data_in_sections(dataset_dir_path, json_dict, transforms=TRANSFORMS, ba
     '''
     Load the data from paths and return dataloaders.
     '''
-    train_dataset = IngredientsDataset(json_dict['train'], dataset_dir_path, transform=transforms)
-    val_dataset = IngredientsDataset(json_dict['val'], dataset_dir_path, transform=transforms)
-    test_dataset = IngredientsDataset(json_dict['test'], dataset_dir_path, transform=transforms)
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+    train_dataloader , val_dataloader, test_dataloader = None, None, None
+    if 'train' in json_dict:
+        train_dataset = IngredientsDataset(json_dict['train'], dataset_dir_path, transform=transforms)
+        train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    if 'val' in json_dict:
+        val_dataset = IngredientsDataset(json_dict['val'], dataset_dir_path, transform=transforms)
+        val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
+    if 'test' in json_dict:
+        test_dataset = IngredientsDataset(json_dict['test'], dataset_dir_path, transform=transforms)
+        test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
     return train_dataloader, val_dataloader, test_dataloader
 
 
@@ -73,11 +77,13 @@ def load_model(w_clip=False, model_path=None):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     net = ResNet(depth=18, clip_flag=w_clip)
     if model_path:
-        net.load_state_dict(torch.load(model_path))
+        num_ftrs = net.fc.in_features
+        net.fc = nn.Linear(num_ftrs, NUM_CATRGORIES)
+        net.load_state_dict(torch.load(model_path), strict=False)
     else:
         net.load_state_dict(torch.hub.load_state_dict_from_url(model_urls['resnet18']), strict=False)
-    num_ftrs = net.fc.in_features
-    net.fc = nn.Linear(num_ftrs, NUM_CATRGORIES)
+        num_ftrs = net.fc.in_features
+        net.fc = nn.Linear(num_ftrs, NUM_CATRGORIES)
     net = net.to(device)
     return net
 
