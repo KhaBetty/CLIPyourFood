@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 from CLIPyourFood.Data.IngredientsLoader import IngredientsDataset, TRANSFORMS
 from CLIPyourFood.model.ResNet import NUM_CATRGORIES, model_urls,ResNet
+from CLIPyourFood.model.ResNet_w_concat_connection import ResNet as concatResnet
 
 THRESHOLD = 0.8
 
@@ -70,12 +71,15 @@ def load_data_in_sections(dataset_dir_path, json_dict, transforms=TRANSFORMS, ba
     return train_dataloader, val_dataloader, test_dataloader
 
 
-def load_model(w_clip=False, model_path=None):
+def load_model(w_clip=False, model_path=None,other_connection_method=False):
     '''
     Load Resnet18 from local checkpoint or download pretrained.
     '''
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    net = ResNet(depth=18, clip_flag=w_clip)
+    if other_connection_method:
+        net=concatResnet(depth=18, clip_flag=True)
+    else:
+        net = ResNet(depth=18, clip_flag=w_clip)
     if model_path:
         num_ftrs = net.fc.in_features
         net.fc = nn.Linear(num_ftrs, NUM_CATRGORIES)
