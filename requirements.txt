@@ -16,5 +16,7 @@ Pillow
 numpy
 math
 time
+shutil
+glob
 json
 git+https://github.com/openai/CLIP.git

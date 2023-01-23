@@ -4,21 +4,9 @@ import torch
 import json
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset
-from torchvision import transforms
 from CLIPyourFood.Data.utils import lables2vec
 from PIL import Image
 
-import warnings
-
-warnings.filterwarnings("ignore")
-
-plt.ion()
-
-TRANSFORMS = transforms.Compose(
-    [
-        transforms.ToTensor(),
-        transforms.Resize((224, 224))
-    ])
 
 
 class IngredientsDataset(Dataset):
