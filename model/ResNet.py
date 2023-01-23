@@ -119,8 +119,8 @@ class BasicBlock(nn.Module):
             clip_features_fc = clip_features_fc.unsqueeze(2).unsqueeze(3)
             clip_features_fc = clip_features_fc.expand(clip_features_fc.size(0), clip_features_fc.size(1),
                                                        residual.size(2),
-                                                       residual.size(3))  # TODO check if this is the right way to do it
-            out = out + residual + clip_features_fc  # TODO change clip features to be with gradient?
+                                                       residual.size(3))
+            out = out + residual + clip_features_fc
         else:
             out = out + residual
         out = self.relu(out)
