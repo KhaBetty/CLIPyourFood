@@ -3,9 +3,10 @@ import torch.nn as nn
 import numpy as np
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
-from CLIPyourFood.Data.IngredientsLoader import IngredientsDataset, TRANSFORMS
+from CLIPyourFood.Data.IngredientsLoader import IngredientsDataset
 from CLIPyourFood.model.ResNet import NUM_CATRGORIES, model_urls,ResNet
 from CLIPyourFood.model.ResNet_w_concat_connection import ResNet as concatResnet
+from CLIPyourFood.Data.utils import TRANSFORMS
 
 THRESHOLD = 0.8
 
