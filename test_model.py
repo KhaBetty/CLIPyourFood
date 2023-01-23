@@ -62,7 +62,7 @@ def evaluate_model(model, dataloader, criterion=CRITERION, batch_size=32, clip_f
         running_f1 += f1_score
 
     epoch_loss = running_loss / len(dataloader.dataset)
-    epoch_acc = running_accuracy / len(dataloader.dataset)
+    epoch_acc = 100 * running_accuracy / len(dataloader.dataset)
     epoch_presicion = running_presicion / len(dataloader.dataset)
     epoch_recall = running_recall / len(dataloader.dataset)
     epoch_f1 = running_f1 / len(dataloader.dataset)
@@ -76,7 +76,7 @@ def evaluate_model(model, dataloader, criterion=CRITERION, batch_size=32, clip_f
 
 
 if __name__ == '__main__':
-    # parameters
+    # parameters that can be modified
     model_path = '/home/maya/proj_deep/CLIPyourFood/results/adding_fc_image_text_encode/resnet_w_clip/resnet_w_clip.pt'
     clip_addition = True
     dataset_path = 'food101/train/food-101'
@@ -85,8 +85,9 @@ if __name__ == '__main__':
                          'clip_text_features': True,
                          'freeze_original_resnet': False,
                          'other_connection_method': False}
+    ####################################
     # testing the model with the loaded data from json
-    #alwats batch 1 for accurate calculation
+    #always batch 1 for accurate calculation
     batch_size = 1
     model = load_model(w_clip=clip_addition, model_path=model_path, clip_modification=clip_modification)
     _, _, test_dataloader = load_data_in_sections(dataset_path, json_dict=json_dict, batch_size=batch_size)

@@ -169,14 +169,14 @@ class ResNet(BasicModule):
         layers = []
         if self.clip_model is not None:  # addition to add CLIP features
             layers.append(block(self.inplanes, planes, stride, downsample,
-                                self.clip_model.features_shape))  # TODO change the clip addition
+                                self.clip_model.features_shape))
         else:
             layers.append(block(self.inplanes, planes, stride, downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             if self.clip_model is not None:  # addition to add CLIP features
                 layers.append(
-                    block(self.inplanes, planes, clip_addition=self.clip_model.features_shape))  # TODO do i need it?
+                    block(self.inplanes, planes, clip_addition=self.clip_model.features_shape))
             else:
                 layers.append(block(self.inplanes, planes))
 

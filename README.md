@@ -1,6 +1,9 @@
 # CLIPyourFood
-Used
-[GitHub](https://youtu.be/i8Cnas7QrMc)
+Used repository in this project OpenAI-CLIP
+[GitHub](https://github.com/openai/CLIP) <br />
+Helping repositories along the way: [Classifier-GitHub](https://github.com/mandeer/Classifier), [food-101-GitHub](https://github.com/shubhajitml/food-101/blob/master/food-101-pytorch.ipynb) <br />
+
+
 
 ## installation guide
 ### 1. Virtual Environment
