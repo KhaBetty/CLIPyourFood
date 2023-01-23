@@ -77,14 +77,18 @@ def evaluate_model(model, dataloader, criterion=CRITERION, batch_size=32, clip_f
 
 if __name__ == '__main__':
     # parameters
-    model_path = '/home/maya/proj_deep/CLIPyourFood/results/adding_fc_image_encode/resnet18_w_clip_concat/resnet_w_clip.pt'
+    model_path = '/home/maya/proj_deep/CLIPyourFood/results/adding_fc_image_text_encode/resnet_w_clip/resnet_w_clip.pt'
     clip_addition = True
     dataset_path = 'food101/train/food-101'
     json_dict = {'test': 'food101/train/food-101/images/ing_with_dish_jsn_test.json'}
+    clip_modification = {'clip_image_features': True,
+                         'clip_text_features': True,
+                         'freeze_original_resnet': False,
+                         'other_connection_method': False}
     # testing the model with the loaded data from json
     #alwats batch 1 for accurate calculation
     batch_size = 1
-    model = load_model(w_clip=clip_addition, model_path=model_path, other_connection_method=True)
+    model = load_model(w_clip=clip_addition, model_path=model_path, clip_modification=clip_modification)
     _, _, test_dataloader = load_data_in_sections(dataset_path, json_dict=json_dict, batch_size=batch_size)
     eval_dict = evaluate_model(model, test_dataloader, clip_flag=clip_addition, batch_size=batch_size)
     for score in list(eval_dict.keys()):

@@ -35,21 +35,20 @@ class CLIPModel:
         if image_flag and text_flag:
             self.features_shape = 1024  # features of concats image and text features
         else:
-            self.features_shape = 512
+            self.features_shape = 512 #features of one of the encoders
 
     def get_clip_features(self, image_paths, texts=None):
-        images = []
-        texts_tokens = []
         images_features = []
         texts_features = []
-        for image_path in image_paths:
-            image = Image.open(image_path)
-            image = image.convert('RGB')
-            image = self.preprocess(image).unsqueeze(0).to(self.device)
-            with torch.no_grad():
-                images_features.append(self.model.encode_image(image).float())
-        images_features = torch.concat(images_features)
-        if type(texts) != type(None):
+        if self.image_flag:
+            for image_path in image_paths:
+                image = Image.open(image_path)
+                image = image.convert('RGB')
+                image = self.preprocess(image).unsqueeze(0).to(self.device)
+                with torch.no_grad():
+                    images_features.append(self.model.encode_image(image).float())
+            images_features = torch.concat(images_features)
+        if self.text_flag:
             for text in texts:
                 text_token = clip.tokenize(text).to(self.device)
                 with torch.no_grad():
@@ -64,6 +63,10 @@ class BasicBlock(nn.Module):
 
     def __init__(self, inplanes, planes, stride=1, downsample=None,
                  clip_addition=None):  # clip_addition is the size of the CLIP features,
+        """
+        Arguments:
+            clip_addition: clip model with the relevant fields - features shape, image flag, text flag.
+        """
         # the channels number of the tensor
         super(BasicBlock, self).__init__()
         self.conv1 = conv3x3(inplanes, planes, stride)
@@ -74,21 +77,25 @@ class BasicBlock(nn.Module):
         self.downsample = downsample
         self.stride = stride
         self.clip_flag = False
+        self.clip_addition = None
         if clip_addition is not None:
-            # self.fc_clip_addition = nn.Linear(2 * clip_addition, planes)
-            self.fc_clip_addition = nn.Linear(clip_addition, planes)  # way to add CLIP features to the model
-            # self.fc_clip_input_concat = nn.Linear(clip_addition+planes, planes) second method
-            self.clip_flag = True
+            # way to add CLIP features to the model
+            self.fc_clip_addition = nn.Linear(clip_addition.features_shape, planes)
+            self.clip_addition = clip_addition
 
     def forward(self, x):
-        if self.clip_flag:
-            clip_features = x[1]
-            residual = x[0]
-            input = x[0]
-        else:
+        """
+        Arguments:
+            x: tuple if contains clip addition (input, clip_input)
+        """
+        if type(self.clip_addition) == type(None):
             clip_features = None
             residual = x
             input = x
+        else:
+            clip_features = x[1]
+            residual = x[0]
+            input = x[0]
 
         out = self.conv1(input)
         out = self.bn1(out)
@@ -101,28 +108,19 @@ class BasicBlock(nn.Module):
             residual = self.downsample(input)
 
         if clip_features is not None:
-            # first method
-            # addition text and image
-            # clip_all = torch.concat(clip_features, dim=1)
-            # clip_features_fc = self.fc_clip_addition(clip_all.float())
-            clip_features_fc = self.fc_clip_addition(clip_features.float())
-            # pad the clip features to the same size as the residual
-            clip_features_fc = clip_features_fc.float()
+            # text and image features combination
+            if self.clip_addition.image_flag and self.clip_addition.text_flag:
+                clip_all = torch.concat(clip_features, dim=1)
+                clip_features_fc = self.fc_clip_addition(clip_all.float())
+            else: #only one of the features type
+                clip_features_fc = self.fc_clip_addition(clip_features.float())
+                # pad the clip features to the same size as the residual
+                clip_features_fc = clip_features_fc.float()
             clip_features_fc = clip_features_fc.unsqueeze(2).unsqueeze(3)
             clip_features_fc = clip_features_fc.expand(clip_features_fc.size(0), clip_features_fc.size(1),
                                                        residual.size(2),
                                                        residual.size(3))  # TODO check if this is the right way to do it
             out = out + residual + clip_features_fc  # TODO change clip features to be with gradient?
-            # second method
-            # out = out + residual
-            # clip_features_con = clip_features.float()
-            # clip_features_con = clip_features_con.unsqueeze(2).unsqueeze(3)
-            # clip_features_con = clip_features_con.expand(clip_features_con.size(0), clip_features_con.size(1), out.size(2), out.size(3))
-            # orig_shape = out.shape
-            # out = torch.concat((out,clip_features_con), dim = 1)
-            # out = out.view(out.size(1), -1).T
-            # out = self.fc_clip_input_concat(out)
-            # out = torch.reshape(out, orig_shape)
         else:
             out = out + residual
         out = self.relu(out)
@@ -142,7 +140,7 @@ config = {
 
 
 class ResNet(BasicModule):
-    def __init__(self, depth, num_classes=1000, clip_flag=False):
+    def __init__(self, depth, num_classes=1000, clip_flag=False, clip_image= True, clip_text =False):
         self.inplanes = 64
         super(ResNet, self).__init__()
         self.model_name = 'resnet'
@@ -156,7 +154,7 @@ class ResNet(BasicModule):
 
         self.clip_model = None
         if clip_flag:
-            self.clip_model = CLIPModel(model_name='ViT-B/32')
+            self.clip_model = CLIPModel(model_name='ViT-B/32', image_flag=clip_image, text_flag=clip_text)
 
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
@@ -191,14 +189,14 @@ class ResNet(BasicModule):
         layers = []
         if self.clip_model is not None:  # addition to add CLIP features
             layers.append(block(self.inplanes, planes, stride, downsample,
-                                self.clip_model.features_shape))  # added clip features shape for connecting layer
+                                self.clip_model))  # added clip features shape for connecting layer
         else:
             layers.append(block(self.inplanes, planes, stride, downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             if self.clip_model is not None:  # addition to add CLIP features
                 layers.append(
-                    block(self.inplanes, planes, clip_addition=self.clip_model.features_shape))
+                    block(self.inplanes, planes, clip_addition=self.clip_model))
                 # added clip features shape for connecting layer
             else:
                 layers.append(block(self.inplanes, planes))
@@ -208,13 +206,19 @@ class ResNet(BasicModule):
     def forward(self, x_all):  # get the original input
         """
         Arguments:
-            x_all: tuple if the clip addition is on or x input if not
+            x_all: tuple if the clip addition is on or x input if not.
+                    if the features contain image and text features - (image f, text f)
         """
         if self.clip_model is not None:
             x = x_all[0]
             clip_x = x_all[1]
-            clip_addition, _ = self.clip_model.get_clip_features(clip_x[0], clip_x[1])
-            # self.clip_addition = self.clip_model.get_clip_features(text_x[0], text_x[1])
+            if self.clip_model.text_flag and self.clip_model.image_flag:
+                clip_addition = self.clip_model.get_clip_features(clip_x[0], clip_x[1])
+            elif self.clip_model.image_flag:
+                clip_addition, _ = self.clip_model.get_clip_features(clip_x[0], clip_x[1])
+            elif self.clip_model.text_flag:
+                _, clip_addition = self.clip_model.get_clip_features(clip_x[0], clip_x[1])
+
             x = self.conv1(x)
             x = self.bn1(x)
             x = self.relu(x)
