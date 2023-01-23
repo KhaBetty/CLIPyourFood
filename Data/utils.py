@@ -24,9 +24,9 @@ def download_dataset(path=None):
         path = os.path.abspath(os.getcwd())
     torchvision.datasets.Food101(path, download=True, transform=TRANSFORMS)
     # move the relevant json files to meta of dataset
-    json_files = glob.glob('ingredients_json/*.json')
+    json_files = glob.glob('ingredients_json/*')
     for json_file in tqdm.tqdm(json_files):
-        shutil.copy(json_file, path + 'meta/')
+        shutil.copy(json_file, path + '/food-101/meta/')
 
 
 def lables2vec(lables, ing_vec_file_path):

@@ -19,28 +19,31 @@ json_dict = {'train': 'meta/ing_with_dish_jsn_train.json',
              'val': 'meta/ing_with_dish_jsn_val.json',
              'test': 'meta/ing_with_dish_jsn_test.json'}
 #################################################
-dataset_path = current_dir + 'Data/food-101/'
-#change parameters from here
+# parameters modification in this part
+
 clip_modification = {'clip_image_features': True,
-                    'clip_text_features': False,
-                    'freeze_original_resnet': False,
-                    # for running the second method of connection with image features only
-                    'other_connection_method': False}
+                     'clip_text_features': False,
+                     'freeze_original_resnet': False,
+                     # for running the second method of connection with image features only
+                     'other_connection_method': False}
 
 config = {
-        'batch_size': 32,
-        'learning_rate': 1e-2,
-        'momentum': 0.9,
-        'transforms': transforms.Compose([
-                                        transforms.ToTensor(),
-                                        transforms.Resize((224, 224))
-                                        ]),
-        'device': torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
-        'clip_addition': True,
-        'clip_modification': clip_modification,
-        'model_checkpoint': None,
-        'output_path ': current_dir
-        }
+    'batch_size': 32,
+    'epochs_num': 5,
+    'learning_rate': 1e-2,
+    'momentum': 0.9,
+    'transforms': transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Resize((224, 224))
+    ]),
+    'device': torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
+    'clip_addition': True,
+    'clip_modification': clip_modification,  # can be edited above this dict in clip_modification
+    'model_checkpoint': None,
+    'output_path': '/home/maya/proj_deep/CLIPyourFood/results/fc_image_bn'
+}
+
+
 ###############################
 
 
@@ -50,10 +53,10 @@ def train(config, dataset_path, json_dict):
                      clip_modification=config['clip_modification'])
 
     optimizer = optim.SGD(net.parameters(), lr=config['learning_rate'], momentum=config['momentum'])
-    train_dataloader, val_dataloader, test_dataloader = load_data_in_sections(dataset_path, json_dict, transforms,
+    train_dataloader, val_dataloader, test_dataloader = load_data_in_sections(dataset_path, json_dict, config['transforms'],
                                                                               config['batch_size'])
 
-    n_epochs = 5
+    n_epochs = config['epochs_num']
     valid_loss_min = np.Inf
     val_loss = []
     val_acc = []
@@ -103,7 +106,8 @@ def train(config, dataset_path, json_dict):
             val_acc.append(100 * correct_t / total_step_val)
             val_loss.append(batch_loss / len(val_dataloader))
             network_learned = batch_loss < valid_loss_min
-            print(f'validation loss: {np.mean(val_loss):.4f}, validation acc: {(100 * correct_t / total_step_val):.4f}\n')
+            print(
+                f'validation loss: {np.mean(val_loss):.4f}, validation acc: {(100 * correct_t / total_step_val):.4f}\n')
 
             if network_learned:
                 valid_loss_min = batch_loss
@@ -114,3 +118,5 @@ def train(config, dataset_path, json_dict):
     val_results = {'accuracy': val_acc, 'loss': val_loss}
     plot_statistics(train_results, val_results, config['output_path'])
 
+
+train(config, dataset_path, json_dict)

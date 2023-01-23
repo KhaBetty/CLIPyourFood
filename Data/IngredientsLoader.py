@@ -4,7 +4,7 @@ import torch
 import json
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset
-from CLIPyourFood.Data.utils import lables2vec
+from CLIPyourFood.Data.utils import lables2vec,TRANSFORMS
 from PIL import Image
 
 
@@ -12,7 +12,7 @@ from PIL import Image
 class IngredientsDataset(Dataset):
     """Ingredients dataset."""
 
-    def __init__(self, json_file, root_dir, transform=None, img_ext='.jpg'):
+    def __init__(self, json_file, root_dir, transform=TRANSFORMS, img_ext='.jpg'):
         """
 		Args:
 			json_file (string): Path to the json file with annotations.
