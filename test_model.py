@@ -1,17 +1,23 @@
 import torch
-from CLIPyourFood.model.ResNet import ResNet, model_urls, NUM_CATRGORIES, CRITERION
-from CLIPyourFood.model.utils import predict, accuracy, THRESHOLD, load_model, load_data_in_sections
-from torchmetrics.classification import MulticlassPrecision, MulticlassRecall, MulticlassF1Score
+from CLIPyourFood.model.ResNet import CRITERION
+from CLIPyourFood.model.utils import predict, accuracy, load_model, load_data_in_sections
 import tqdm
 
 
 def calc_scores(predictions, targets):
+    """
+    Calculate presicion, recall and f1 score.
+    :param predictions: tensor of sample with predictions
+    :param targets: tensor of the sample correct labels
+    """
+
     def _opposite_binary_tensor(tensor):
-        return -1*tensor+1
-    tp = torch.sum(torch.mul(predictions,targets)).item()
-    fn = torch.sum(torch.mul(_opposite_binary_tensor(predictions),targets)).item()
+        return -1 * tensor + 1
+
+    tp = torch.sum(torch.mul(predictions, targets)).item()
+    fn = torch.sum(torch.mul(_opposite_binary_tensor(predictions), targets)).item()
     tn = torch.sum(torch.mul(_opposite_binary_tensor(predictions), _opposite_binary_tensor(targets))).item()
-    fp = torch.sum(torch.mul(predictions , _opposite_binary_tensor(targets))).item()
+    fp = torch.sum(torch.mul(predictions, _opposite_binary_tensor(targets))).item()
     if tp + fp == 0:
         presicion = 0
     else:
@@ -20,12 +26,11 @@ def calc_scores(predictions, targets):
         recall = 0
     else:
         recall = tp / (tp + fn)
-    if recall+presicion == 0:
+    if recall + presicion == 0:
         f1_score = 0
     else:
-        f1_score = 2 * presicion * recall / (recall+presicion)
+        f1_score = 2 * presicion * recall / (recall + presicion)
     return presicion, recall, f1_score
-
 
 
 def evaluate_model(model, dataloader, criterion=CRITERION, batch_size=32, clip_flag=False):
@@ -47,7 +52,7 @@ def evaluate_model(model, dataloader, criterion=CRITERION, batch_size=32, clip_f
             outputs = model((inputs, labels))  # TODO debug because not the correct way for batch
         else:
             outputs = model(inputs)
-        preds = predict(outputs)#, threshold=0.5)
+        preds = predict(outputs)  # , threshold=0.5)
         loss = criterion(outputs, ingredients_vec)
         running_loss += loss.item()
         running_accuracy += accuracy(torch.sum(preds == ingredients_vec.data), batch_size).item()
@@ -58,7 +63,7 @@ def evaluate_model(model, dataloader, criterion=CRITERION, batch_size=32, clip_f
 
     epoch_loss = running_loss / len(dataloader.dataset)
     epoch_acc = running_accuracy / len(dataloader.dataset)
-    epoch_presicion = running_presicion /len(dataloader.dataset)
+    epoch_presicion = running_presicion / len(dataloader.dataset)
     epoch_recall = running_recall / len(dataloader.dataset)
     epoch_f1 = running_f1 / len(dataloader.dataset)
     eval_dict = {'loss': epoch_loss,
@@ -71,14 +76,16 @@ def evaluate_model(model, dataloader, criterion=CRITERION, batch_size=32, clip_f
 
 
 if __name__ == '__main__':
-    # load model
-    model_path = '/home/maya/proj_deep/CLIPyourFood/results/adding_fc_image_encode/resnet18/resnet.pt'
-    w_clip = False
+    # parameters
+    model_path = '/home/maya/proj_deep/CLIPyourFood/results/adding_fc_image_encode/resnet18_w_clip_concat/resnet_w_clip.pt'
+    clip_addition = True
+    dataset_path = 'food101/train/food-101'
+    json_dict = {'test': 'food101/train/food-101/images/ing_with_dish_jsn_test.json'}
+    # testing the model with the loaded data from json
+    #alwats batch 1 for accurate calculation
     batch_size = 1
-    dataset_path = 'food101/train/food-101/images'
-    json_dict = {'test' : 'food101/train/food-101/images/ing_with_dish_jsn_test.json'}
-    model = load_model(w_clip=w_clip, model_path=model_path)
+    model = load_model(w_clip=clip_addition, model_path=model_path, other_connection_method=True)
     _, _, test_dataloader = load_data_in_sections(dataset_path, json_dict=json_dict, batch_size=batch_size)
-    eval_dict = evaluate_model(model, test_dataloader, clip_flag=w_clip, batch_size=batch_size)
+    eval_dict = evaluate_model(model, test_dataloader, clip_flag=clip_addition, batch_size=batch_size)
     for score in list(eval_dict.keys()):
         print(score, ':', eval_dict[score])

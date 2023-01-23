@@ -1,12 +1,13 @@
 import torch.nn as nn
 import math
-from .BasicModule import BasicModule
+from CLIPyourFood.model.BasicModule import BasicModule
 import clip
 import torch
 from PIL import Image
 
 NUM_CATRGORIES = 227
 CRITERION = nn.BCEWithLogitsLoss()
+
 model_urls = {
     'resnet18': "https://download.pytorch.org/models/resnet18-f37072fd.pth",
     'resnet34': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth'
@@ -20,24 +21,34 @@ def conv3x3(in_planes, out_planes, stride=1):
 
 
 class CLIPModel:
-    def __init__(self, model_name):
+    def __init__(self, model_name, image_flag=True, text_flag=False):
+        """
+        Arguments:
+            image_flag: flag for including image features from clip
+            text_flag: flag for including image features from clip
+        """
         self.model_name = model_name
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.model, self.preprocess = clip.load(model_name, device=self.device)
-        self.text_shape = 512
+        self.image_flag = image_flag
+        self.text_flag = text_flag
+        if image_flag and text_flag:
+            self.features_shape = 1024  # features of concats image and text features
+        else:
+            self.features_shape = 512
 
     def get_clip_features(self, image_paths, texts=None):
         images = []
         texts_tokens = []
         images_features = []
         texts_features = []
-        # for image_path in image_paths:
-        #     image = Image.open(image_path)
-        #     image = image.convert('RGB')
-        #     image = self.preprocess(image).unsqueeze(0).to(self.device)
-        #     with torch.no_grad():
-        #         images_features.append(self.model.encode_image(image).float())
-        # images_features = torch.concat(images_features)
+        for image_path in image_paths:
+            image = Image.open(image_path)
+            image = image.convert('RGB')
+            image = self.preprocess(image).unsqueeze(0).to(self.device)
+            with torch.no_grad():
+                images_features.append(self.model.encode_image(image).float())
+        images_features = torch.concat(images_features)
         if type(texts) != type(None):
             for text in texts:
                 text_token = clip.tokenize(text).to(self.device)
@@ -52,7 +63,8 @@ class BasicBlock(nn.Module):
     expansion = 1
 
     def __init__(self, inplanes, planes, stride=1, downsample=None,
-                 clip_addition=None):  # clip_addition is the size of the CLIP features, the third dimension of the tensor
+                 clip_addition=None):  # clip_addition is the size of the CLIP features,
+        # the channels number of the tensor
         super(BasicBlock, self).__init__()
         self.conv1 = conv3x3(inplanes, planes, stride)
         self.bn1 = nn.BatchNorm2d(planes)
@@ -63,8 +75,9 @@ class BasicBlock(nn.Module):
         self.stride = stride
         self.clip_flag = False
         if clip_addition is not None:
-            #self.fc_clip_addition = nn.Linear(2 * clip_addition, planes)
-            self.fc_clip_addition =nn.Linear(clip_addition, planes)  # way to add CLIP features to the model
+            # self.fc_clip_addition = nn.Linear(2 * clip_addition, planes)
+            self.fc_clip_addition = nn.Linear(clip_addition, planes)  # way to add CLIP features to the model
+            # self.fc_clip_input_concat = nn.Linear(clip_addition+planes, planes) second method
             self.clip_flag = True
 
     def forward(self, x):
@@ -89,16 +102,17 @@ class BasicBlock(nn.Module):
 
         if clip_features is not None:
             # first method
-            #addition text and image
+            # addition text and image
             # clip_all = torch.concat(clip_features, dim=1)
+            # clip_features_fc = self.fc_clip_addition(clip_all.float())
             clip_features_fc = self.fc_clip_addition(clip_features.float())
             # pad the clip features to the same size as the residual
-            #clip_features_fc = clip_features.float()
+            clip_features_fc = clip_features_fc.float()
             clip_features_fc = clip_features_fc.unsqueeze(2).unsqueeze(3)
             clip_features_fc = clip_features_fc.expand(clip_features_fc.size(0), clip_features_fc.size(1),
                                                        residual.size(2),
                                                        residual.size(3))  # TODO check if this is the right way to do it
-            out = out + residual + clip_features_fc #TODO change clip features to be with gradient?
+            out = out + residual + clip_features_fc  # TODO change clip features to be with gradient?
             # second method
             # out = out + residual
             # clip_features_con = clip_features.float()
@@ -177,34 +191,39 @@ class ResNet(BasicModule):
         layers = []
         if self.clip_model is not None:  # addition to add CLIP features
             layers.append(block(self.inplanes, planes, stride, downsample,
-                                self.clip_model.text_shape))  # TODO change the clip addition
+                                self.clip_model.features_shape))  # added clip features shape for connecting layer
         else:
             layers.append(block(self.inplanes, planes, stride, downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             if self.clip_model is not None:  # addition to add CLIP features
                 layers.append(
-                    block(self.inplanes, planes, clip_addition=self.clip_model.text_shape))  # TODO do i need it?
+                    block(self.inplanes, planes, clip_addition=self.clip_model.features_shape))
+                # added clip features shape for connecting layer
             else:
                 layers.append(block(self.inplanes, planes))
 
         return nn.Sequential(*layers)
 
     def forward(self, x_all):  # get the original input
-        # call CLIP features
+        """
+        Arguments:
+            x_all: tuple if the clip addition is on or x input if not
+        """
         if self.clip_model is not None:
             x = x_all[0]
-            text_x = x_all[1]
-            _, self.clip_addition = self.clip_model.get_clip_features(text_x[0], text_x[1])
+            clip_x = x_all[1]
+            clip_addition, _ = self.clip_model.get_clip_features(clip_x[0], clip_x[1])
+            # self.clip_addition = self.clip_model.get_clip_features(text_x[0], text_x[1])
             x = self.conv1(x)
             x = self.bn1(x)
             x = self.relu(x)
             x = self.maxpool(x)
 
-            x = self.layer1((x, self.clip_addition))
-            x = self.layer2((x[0], self.clip_addition))
-            x = self.layer3((x[0], self.clip_addition))
-            x = self.layer4((x[0], self.clip_addition))
+            x = self.layer1((x, clip_addition))
+            x = self.layer2((x[0], clip_addition))
+            x = self.layer3((x[0], clip_addition))
+            x = self.layer4((x[0], clip_addition))
             x = x[0]
         else:
             x = x_all

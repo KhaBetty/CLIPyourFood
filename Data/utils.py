@@ -122,7 +122,7 @@ def create_ing_dict(ingredients_file, food_img_file, slash):
 	with open("ing_vector.txt", mode="w") as file:
 		file.write(str(ing_vector_wo_dup))
 
-	np.savetxt("ing_vector_one_in_line.txt",
+	np.savetxt("ingredients_dict.txt",
 	           ing_vector_wo_dup,
 	           delimiter=", ",
 	           fmt='% s')
