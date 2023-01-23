@@ -31,14 +31,14 @@ class CLIPModel:
         texts_tokens = []
         images_features = []
         texts_features = []
-        for image_path in image_paths:
-            image = Image.open(image_path)
-            image = image.convert('RGB')
-            image = self.preprocess(image).unsqueeze(0).to(self.device)
-            with torch.no_grad():
-                images_features.append(self.model.encode_image(image).float())
-        images_features = torch.concat(images_features)
-        if texts:
+        # for image_path in image_paths:
+        #     image = Image.open(image_path)
+        #     image = image.convert('RGB')
+        #     image = self.preprocess(image).unsqueeze(0).to(self.device)
+        #     with torch.no_grad():
+        #         images_features.append(self.model.encode_image(image).float())
+        # images_features = torch.concat(images_features)
+        if type(texts) != type(None):
             for text in texts:
                 text_token = clip.tokenize(text).to(self.device)
                 with torch.no_grad():
@@ -63,8 +63,8 @@ class BasicBlock(nn.Module):
         self.stride = stride
         self.clip_flag = False
         if clip_addition is not None:
-            self.fc_clip_addition = nn.Linear(2 * clip_addition, planes)
-            #nn.Linear(clip_addition, planes)  # way to add CLIP features to the model
+            #self.fc_clip_addition = nn.Linear(2 * clip_addition, planes)
+            self.fc_clip_addition =nn.Linear(clip_addition, planes)  # way to add CLIP features to the model
             self.clip_flag = True
 
     def forward(self, x):
@@ -90,14 +90,15 @@ class BasicBlock(nn.Module):
         if clip_features is not None:
             # first method
             #addition text and image
-            clip_all = torch.concat(clip_features, dim=1)
-            clip_features_fc = self.fc_clip_addition(clip_all.float())
+            # clip_all = torch.concat(clip_features, dim=1)
+            clip_features_fc = self.fc_clip_addition(clip_features.float())
             # pad the clip features to the same size as the residual
+            #clip_features_fc = clip_features.float()
             clip_features_fc = clip_features_fc.unsqueeze(2).unsqueeze(3)
             clip_features_fc = clip_features_fc.expand(clip_features_fc.size(0), clip_features_fc.size(1),
                                                        residual.size(2),
                                                        residual.size(3))  # TODO check if this is the right way to do it
-            out = out + residual + clip_features_fc  # self.fc_clip_addition(clip_features) #TODO change clip features to be with gradient?
+            out = out + residual + clip_features_fc #TODO change clip features to be with gradient?
             # second method
             # out = out + residual
             # clip_features_con = clip_features.float()
@@ -194,7 +195,7 @@ class ResNet(BasicModule):
         if self.clip_model is not None:
             x = x_all[0]
             text_x = x_all[1]
-            self.clip_addition = self.clip_model.get_clip_features(text_x[0], text_x[1])
+            _, self.clip_addition = self.clip_model.get_clip_features(text_x[0], text_x[1])
             x = self.conv1(x)
             x = self.bn1(x)
             x = self.relu(x)

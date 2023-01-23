@@ -48,7 +48,7 @@ json_dict = {'train': 'food101/train/food-101/images/ing_with_dish_jsn_train.jso
              'val': 'food101/train/food-101/images/ing_with_dish_jsn_val.json',
              'test': 'food101/train/food-101/images/ing_with_dish_jsn_test.json'}
 
-output_path = '/home/maya/proj_deep/CLIPyourFood/results/adding_fc_image_text_encode/resnet_w_clip'
+output_path = '/home/maya/proj_deep/CLIPyourFood/results/adding_fc_text_encode/resnet18_w_clip'
 
 train_dataloader, val_dataloader, test_dataloader = load_data_in_sections(dataset_path, json_dict, transforms,
                                                                           batch_size)
