@@ -32,6 +32,7 @@ Helping repositories along the way: [Classifier-GitHub](https://github.com/mande
 Our goal is to recognize from an image of a dish, the ingredients that it consists of, or at least the significant ingredients that can be inferred from the image.
 The ability to accurately recognize ingredients in food images has the potential to revolutionize the food industry, from recipe suggestion to dietary management. 
 With the increasing popularity of food-related social media platforms and the growing number of people with dietary restrictions, there is a clear need for a tool that can quickly and easily identify ingredients in food images. This project aims to develop a prototype for a model for food ingredient recognition from a given image, with the goal of providing a valuable resource for individuals and companies in the food industry.
+
 ------------------------
 ## Dataset 
 
@@ -40,6 +41,7 @@ commonly used for research in food recognition and classification.
 * 101 Food Classes <br />
 * 101,000 images <br />
 * 800-1300 images in each class <br />
+
 ------------------------
 ## Model 
 
@@ -76,10 +78,11 @@ sudo apt-get install python3-tk
 The used dataset is [FOOD101](https://pytorch.org/vision/stable/generated/torchvision.datasets.Food101.html#:~:text=The%20Food%2D101%20is%20a,contain%20some%20amount%20of%20noise.).<br />
 Run the Data/utils.py file as main for downloading the dataset.
 * You can clean the data [annotations](http://www.ub.edu/cvub/ingredients101/) by yourself with Data/annotation_extractor.py.
+
 ------------------------
 ##  Train & Test
 #### Train model
-Mdify hyperparameters in the relevant block at `train_model.py`. <br />
+Modify hyperparameters in the relevant block at `train_model.py`. <br />
 The output path should exist. 
 Run the train_model script for training model. <br />
 You can add to the model CLIP features of image. <br />
@@ -92,6 +95,7 @@ The scores are printed to the output channel (default terminal).
 Modify the parameters section in `sample_test.py`. <br />
 The parameters relate to the loaded model and the image path. <br />
 The result will be displayed on separate window with the ingredients as the title.
+
 ------------------------
 ## Files in the repository
 
@@ -110,6 +114,3 @@ The result will be displayed on separate window with the ingredients as the titl
 | `model/utils.py`                                              | utility functions                                                                                                                             |
 
 
-Our goal is to recognize from an image of a dish, the ingredients that it consists of, or at least the significant ingredients that can be inferred from the image.
-The ability to accurately recognize ingredients in food images has the potential to revolutionize the food industry, from recipe suggestion to dietary management. 
-With the increasing popularity of food-related social media platforms and the growing number of people with dietary restrictions, there is a clear need for a tool that can quickly and easily identify ingredients in food images. This project aims to develop a prototype for a model for food ingredient recognition from a given image, with the goal of providing a valuable resource for individuals and companies in the food industry.
