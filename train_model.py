@@ -13,11 +13,10 @@ np.random.seed(seed)
 torch.manual_seed(seed)
 
 current_dir = os.path.abspath(os.getcwd())
-
-
-json_dict = {'train': 'meta/ing_with_dish_jsn_train.json',
-             'val': 'meta/ing_with_dish_jsn_val.json',
-             'test': 'meta/ing_with_dish_jsn_test.json'}
+dataset_path = current_dir + '/Data/food-101/'
+json_dict = {'train': dataset_path +'meta/ing_with_dish_jsn_train.json',
+             'val': dataset_path + 'meta/ing_with_dish_jsn_val.json',
+             'test': dataset_path + 'meta/ing_with_dish_jsn_test.json'}
 #################################################
 # parameters modification in this part
 

@@ -82,7 +82,7 @@ if __name__ == '__main__':
     dataset_path = 'food101/train/food-101'
     json_dict = {'test': 'food101/train/food-101/images/ing_with_dish_jsn_test.json'}
     clip_modification = {'clip_image_features': True,
-                         'clip_text_features': True,
+                         'clip_text_features': False,
                          'freeze_original_resnet': False,
                          'other_connection_method': False}
     ####################################

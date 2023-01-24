@@ -2,7 +2,6 @@ from __future__ import print_function, division
 import os
 import torch
 import json
-import matplotlib.pyplot as plt
 from torch.utils.data import Dataset
 from CLIPyourFood.Data.utils import lables2vec,TRANSFORMS
 from PIL import Image
