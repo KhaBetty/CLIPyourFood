@@ -77,7 +77,7 @@ def evaluate_model(model, dataloader, criterion=CRITERION, batch_size=32, clip_f
 
 if __name__ == '__main__':
     # parameters that can be modified
-    model_path = '/home/maya/proj_deep/CLIPyourFood/results/adding_fc_image_text_encode/resnet_w_clip/resnet_w_clip.pt'
+    model_path = ''
     clip_addition = True
     dataset_path = 'food101/train/food-101'
     json_dict = {'test': 'food101/train/food-101/images/ing_with_dish_jsn_test.json'}
