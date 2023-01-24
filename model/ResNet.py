@@ -1,3 +1,5 @@
+#Script from repository Classifier - https://github.com/mandeer/Classifier
+#Modified to our goal
 import torch.nn as nn
 import math
 from CLIPyourFood.model.BasicModule import BasicModule

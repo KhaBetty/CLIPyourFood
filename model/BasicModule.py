@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-
+#Script from repository Classifier - https://github.com/mandeer/Classifier
 import torch
 import torch.nn as nn
 import time

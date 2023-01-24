@@ -39,7 +39,7 @@ config = {
     'clip_addition': True,
     'clip_modification': clip_modification,  # can be edited above this dict in clip_modification
     'model_checkpoint': None,
-    'output_path': '/home/maya/proj_deep/CLIPyourFood/results/fc_image_bn'
+    'output_path': ''
 }
 
 
