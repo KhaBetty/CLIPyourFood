@@ -76,6 +76,7 @@ def evaluate_model(model, dataloader, criterion=CRITERION, batch_size=32, clip_f
 
 
 if __name__ == '__main__':
+    ####################################
     # parameters that can be modified
     model_path = ''
     clip_addition = True

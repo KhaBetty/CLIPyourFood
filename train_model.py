@@ -12,39 +12,6 @@ seed = 42
 np.random.seed(seed)
 torch.manual_seed(seed)
 
-current_dir = os.path.abspath(os.getcwd())
-dataset_path = current_dir + '/Data/food-101/'
-json_dict = {'train': dataset_path +'meta/ing_with_dish_jsn_train.json',
-             'val': dataset_path + 'meta/ing_with_dish_jsn_val.json',
-             'test': dataset_path + 'meta/ing_with_dish_jsn_test.json'}
-#################################################
-# parameters modification in this part
-
-clip_modification = {'clip_image_features': True,
-                     'clip_text_features': False,
-                     'freeze_original_resnet': False,
-                     # for running the second method of connection with image features only
-                     'other_connection_method': False}
-
-config = {
-    'batch_size': 32,
-    'epochs_num': 5,
-    'learning_rate': 1e-2,
-    'momentum': 0.9,
-    'transforms': transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Resize((224, 224))
-    ]),
-    'device': torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
-    'clip_addition': True,
-    'clip_modification': clip_modification,  # can be edited above this dict in clip_modification
-    'model_checkpoint': None,
-    'output_path': ''
-}
-
-
-###############################
-
 
 def train(config, dataset_path, json_dict):
     # model
@@ -52,7 +19,8 @@ def train(config, dataset_path, json_dict):
                      clip_modification=config['clip_modification'])
 
     optimizer = optim.SGD(net.parameters(), lr=config['learning_rate'], momentum=config['momentum'])
-    train_dataloader, val_dataloader, test_dataloader = load_data_in_sections(dataset_path, json_dict, config['transforms'],
+    train_dataloader, val_dataloader, test_dataloader = load_data_in_sections(dataset_path, json_dict,
+                                                                              config['transforms'],
                                                                               config['batch_size'])
 
     n_epochs = config['epochs_num']
@@ -118,4 +86,37 @@ def train(config, dataset_path, json_dict):
     plot_statistics(train_results, val_results, config['output_path'])
 
 
-train(config, dataset_path, json_dict)
+if __name__ == '__main__':
+    current_dir = os.path.abspath(os.getcwd())
+    #################################################
+    # parameters modification in this part
+
+    dataset_path = current_dir + '/Data/food-101/'
+    json_dict = {'train': dataset_path + 'meta/ing_with_dish_jsn_train.json',
+                 'val': dataset_path + 'meta/ing_with_dish_jsn_val.json',
+                 'test': dataset_path + 'meta/ing_with_dish_jsn_test.json'}
+
+    clip_modification = {'clip_image_features': True,
+                         'clip_text_features': False,
+                         'freeze_original_resnet': False,
+                         # for running the second method of connection with image features only
+                         'other_connection_method': False}
+
+    config = {
+        'batch_size': 32,
+        'epochs_num': 5,
+        'learning_rate': 1e-2,
+        'momentum': 0.9,
+        'transforms': transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Resize((224, 224))
+        ]),
+        'device': torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
+        'clip_addition': True,
+        'clip_modification': clip_modification,  # can be edited above this dict in clip_modification
+        'model_checkpoint': None,
+        'output_path': ''
+    }
+
+    ###############################
+    train(config, dataset_path, json_dict)
