@@ -108,3 +108,8 @@ The result will be displayed on separate window with the ingredients as the titl
 | `model/Resnet.py`                                             | modified Resnet with our additions (image and text extracturs of CLIP). source code from [Classifier](https://github.com/mandeer/Classifier). |
 | `model/Resnet_w_concat_connection.py`                         | modified Resnet with different connection in skip connections.source code from [Classifier](https://github.com/mandeer/Classifier).                                                                           |
 | `model/utils.py`                                              | utility functions                                                                                                                             |
+
+
+Our goal is to recognize from an image of a dish, the ingredients that it consists of, or at least the significant ingredients that can be inferred from the image.
+The ability to accurately recognize ingredients in food images has the potential to revolutionize the food industry, from recipe suggestion to dietary management. 
+With the increasing popularity of food-related social media platforms and the growing number of people with dietary restrictions, there is a clear need for a tool that can quickly and easily identify ingredients in food images. This project aims to develop a prototype for a model for food ingredient recognition from a given image, with the goal of providing a valuable resource for individuals and companies in the food industry.
