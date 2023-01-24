@@ -28,11 +28,13 @@ Helping repositories along the way: [Classifier-GitHub](https://github.com/mande
 * [Files in repo](#files-in-the-repository)
 ------------------------
 ## Project Goal
+
 Our goal is to recognize from an image of a dish, the ingredients that it consists of, or at least the significant ingredients that can be inferred from the image.
 The ability to accurately recognize ingredients in food images has the potential to revolutionize the food industry, from recipe suggestion to dietary management. 
 With the increasing popularity of food-related social media platforms and the growing number of people with dietary restrictions, there is a clear need for a tool that can quickly and easily identify ingredients in food images. This project aims to develop a prototype for a model for food ingredient recognition from a given image, with the goal of providing a valuable resource for individuals and companies in the food industry.
 ------------------------
 ## Dataset 
+
 [FOOD 101](https://pytorch.org/vision/stable/generated/torchvision.datasets.Food101.html#:~:text=The%20Food%2D101%20is%20a,contain%20some%20amount%20of%20noise.) <br />
 commonly used for research in food recognition and classification.
 * 101 Food Classes <br />
@@ -40,6 +42,7 @@ commonly used for research in food recognition and classification.
 * 800-1300 images in each class <br />
 ------------------------
 ## Model 
+
 Our model is based on ResNet18 CNN and CLIP Image encoder.  
 The CLIP Image features pass through FC layer, Batch Normalization layer, and are summed to the skip connections of the ResNet activations.
 
