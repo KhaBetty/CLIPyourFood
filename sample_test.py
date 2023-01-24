@@ -5,7 +5,7 @@ from CLIPyourFood.Data.utils import vec2lables, imshow
 from PIL import Image
 
 
-def predict_sample(model, input_img_path, dish_name='tmp'):
+def predict_sample(model, input_img_path, dish_name='irrelevant'):
     '''
     Get ingredients list for the image inserted with the model.
     '''
@@ -29,17 +29,15 @@ def predict_sample(model, input_img_path, dish_name='tmp'):
 
 if __name__ == '__main__':
     # parameters that can be modified
-    model_path = 'results/adding_fc_image_encode/resnet18_w_clip/resnet_w_clip.pt'
+    model_path = ''
     clip_addition = True
     clip_modification = {'clip_image_features': True,
                          'clip_text_features': False,
                          'freeze_original_resnet': False,
                          'other_connection_method': False}
-    input_img_path = 'Data/food-101/images/shrimp_and_grits/22381.jpg'
+    input_img_path = ''
     ####################################
-    # testing the model with the loaded data from json
-    #always batch 1 for accurate calculation
-
+    # testing the model with image
     model = load_model(w_clip=clip_addition, model_path=model_path, clip_modification=clip_modification)
     ing_vec = predict_sample(model, input_img_path)
     imshow(input_img_path, ing_vec)
