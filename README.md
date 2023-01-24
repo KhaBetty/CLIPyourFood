@@ -1,12 +1,15 @@
 <h1 style="text-align: center;">
 CLIPyourFood
 </h1>
+
 <h3 style="text-align: center;">
 <a href="https://www.linkedin.com/in/betty-khaimov-027b4016a/">Elizabet Khaimov</a> & 
 <a href="https://www.linkedin.com/in/ori-zehngut-633344213/">Ori Zehngut</a>
 </h3>
+
 <p style="text-align: center;">
-Project in Deep Learning course - 046211, Technion, 2022-2023 </p>
+Project in Deep Learning course - 046211, Technion, 2022-2023 
+</p>
 
 Used repository in this project OpenAI-CLIP
 [GitHub](https://github.com/openai/CLIP) <br />
