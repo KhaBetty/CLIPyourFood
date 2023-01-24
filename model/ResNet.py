@@ -35,7 +35,7 @@ class CLIPModel:
         if image_flag and text_flag:
             self.features_shape = 1024  # features of concats image and text features
         else:
-            self.features_shape = 512 #features of one of the encoders
+            self.features_shape = 512 # features of one of the encoders
 
     def get_clip_features(self, image_paths, texts=None):
         images_features = []
@@ -82,6 +82,7 @@ class BasicBlock(nn.Module):
             # way to add CLIP features to the model
             self.fc_clip_addition = nn.Linear(clip_addition.features_shape, planes)
             self.clip_addition = clip_addition
+            self.bn_clip = nn.BatchNorm2d(planes)
 
     def forward(self, x):
         """
@@ -120,6 +121,7 @@ class BasicBlock(nn.Module):
             clip_features_fc = clip_features_fc.expand(clip_features_fc.size(0), clip_features_fc.size(1),
                                                        residual.size(2),
                                                        residual.size(3))
+            clip_features_fc = self.bn_clip(clip_features_fc)
             out = out + residual + clip_features_fc
         else:
             out = out + residual

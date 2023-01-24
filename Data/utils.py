@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import json5 as json
 import torchvision
@@ -6,6 +7,7 @@ import shutil
 import glob
 import tqdm
 from torchvision import transforms
+from PIL import Image
 
 TRANSFORMS = transforms.Compose(
     [
@@ -53,6 +55,13 @@ def lables2vec(lables, ing_vec_file_path):
 
     return multi_one_hot_vec
 
+def imshow(img_path, title):
+    image = Image.open(img_path)
+    plt.imshow(image)
+    plt.title(str(title))
+    plt.axis('off')
+    plt.show()
+    plt.waitKey(0)
 
 def vec2lables(vec, ing_vec_file_path):
     '''
@@ -77,8 +86,6 @@ def vec2lables(vec, ing_vec_file_path):
 
     return lables
 
-
-# Prep ing data -  Python script.
 
 
 def create_ing_dict(ingredients_file, food_img_file, slash):
