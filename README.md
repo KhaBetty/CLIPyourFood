@@ -10,11 +10,15 @@ Project in Deep Learning course - 046211, Technion, 2022-2023 </p>
 
 Used repository in this project OpenAI-CLIP
 [GitHub](https://github.com/openai/CLIP) <br />
-Helping repositories along the way: [Classifier-GitHub](https://github.com/mandeer/Classifier), [food-101-GitHub](https://github.com/shubhajitml/food-101/blob/master/food-101-pytorch.ipynb) <br />
+Helping repositories along the way: [Classifier-GitHub](https://github.com/mandeer/Classifier), 
+[food-101-GitHub](https://github.com/shubhajitml/food-101/blob/master/food-101-pytorch.ipynb)
 
-<h3 style="text-align: center;">
-<img width="425" height="555" src="Data/Docs/prediction_churros.jpeg">
-</h3>
+
+<p class="aligncenter">
+    <img src="Data/Docs/readme_image.jpg" >
+</p>
+
+
 ### Sections:
 * [Project goal](#project-goal)
 * [Dataset](#dataset)
@@ -36,6 +40,12 @@ commonly used for research in food recognition and classification.
 * 800-1300 images in each class <br />
 ------------------------
 ## Model 
+Our model is based on ResNet18 CNN and CLIP Image encoder.  
+The CLIP Image features pass through FC layer, Batch Normalization layer, and are summed to the skip connections of the ResNet activations.
+
+<p class="aligncenter">
+    <img src="Data/Docs/model_image.jpg" >
+</p>
 
 ------------------------
 ## Installation Guide
