@@ -84,6 +84,7 @@ Run the Data/utils.py file as main for downloading the dataset.
 
 ------------------------
 ##  Train & Test
+* Note that at the first use you should train for creating checkpoint of model weights.
 #### Train model
 Modify hyperparameters in the relevant block at `train_model.py`. <br />
 The output path should exist. 
